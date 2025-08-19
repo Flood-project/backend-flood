@@ -6,16 +6,16 @@ import (
 )
 
 type AccountUseCase interface {
-	Create(account account_user.Account) error
+	Create(account *account_user.Account) error
 	Fetch() ([]account_user.Account, error)
 }
 
 type accountUseCase struct {
-	saleRepository repository.AccountRepository
+	accountRepository repository.AccountRepository
 }
 
 func (a *accountUseCase) Create(account *account_user.Account) error {
-	err := a.saleRepository.Create(account)
+	err := a.accountRepository.Create(account)
 	if err != nil {
 		return err
 	}
@@ -24,7 +24,7 @@ func (a *accountUseCase) Create(account *account_user.Account) error {
 }
 
 func (a *accountUseCase) Fetch() ([]account_user.Account, error) {
-	accounts, err := a.saleRepository.Fetch()
+	accounts, err := a.accountRepository.Fetch()
 	if err != nil {
 		return nil, err
 	}

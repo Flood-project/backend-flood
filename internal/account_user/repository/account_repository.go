@@ -22,8 +22,8 @@ func NewAccountRepository(db *sqlx.DB) AccountRepository {
 
 func (ur *accountRepository) Create(account *account_user.Account) error {
 	query := `INSERT INTO account (name, email, password_hash)
-		VALUES($1, $2, $3, $4)
-		RETURNING id_account`
+		VALUES($1, $2, $3)
+		RETURNING id`
 
 	err := ur.DB.QueryRow(
 		query,
@@ -40,7 +40,7 @@ func (ur *accountRepository) Create(account *account_user.Account) error {
 }
 
 func (ur *accountRepository) Fetch() (accounts []account_user.Account, err error) {
-	query := `SELECT (id_account, name, email, password_hash) FROM account`
+	query := `SELECT id, name, email, password_hash FROM account`
 
 	err = ur.DB.Select(&accounts, query)
 	if err != nil {
