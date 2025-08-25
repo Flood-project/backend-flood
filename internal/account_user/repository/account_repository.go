@@ -8,6 +8,8 @@ import (
 type AccountRepository interface {
 	Create(account *account_user.Account) error
 	Fetch() (accounts []account_user.Account, err error)
+	GetByID(id int32) (*account_user.Account, error)
+	GetByEmail(email string) (*account_user.Account, error)
 }
 
 type accountRepository struct {
@@ -48,4 +50,41 @@ func (ur *accountRepository) Fetch() (accounts []account_user.Account, err error
 	}
 
 	return
+}
+
+func (ur *accountRepository) GetByID(id int32) (*account_user.Account, error) {
+	var account account_user.Account
+
+	query := `SELECT id, name, email, password_hash FROM account WHERE id = $1`
+
+	err := ur.DB.QueryRow(
+		query,
+		id,
+	).Scan(
+		&account.Id_account,
+		&account.Name,
+		&account.Email,
+		&account.Password_hash,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &account, nil
+}
+
+func (accountRepository *accountRepository) GetByEmail(email string) (*account_user.Account, error) {
+	var account account_user.Account
+
+	query := `SELECT email, password_hash FROM account WHERE email = $1`
+
+	err := accountRepository.DB.QueryRow(
+		query,
+		email,
+	).Scan(&account.Email, &account.Password_hash)
+	if err != nil {
+		return nil, err
+	}
+
+	return &account, nil
 }

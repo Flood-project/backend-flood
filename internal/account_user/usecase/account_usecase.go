@@ -8,6 +8,8 @@ import (
 type AccountUseCase interface {
 	Create(account *account_user.Account) error
 	Fetch() ([]account_user.Account, error)
+	GetByID(id int32) (*account_user.Account, error)
+	GetByEmail(email string) (*account_user.Account, error)
 }
 
 type accountUseCase struct {
@@ -30,4 +32,22 @@ func (a *accountUseCase) Fetch() ([]account_user.Account, error) {
 	}
 
 	return accounts, nil
+}
+
+func (a *accountUseCase) GetByID(id int32) (*account_user.Account, error) {
+	account, err := a.accountRepository.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil	
+}
+
+func (a *accountUseCase) GetByEmail(email string) (*account_user.Account, error) {
+	account, err := a.accountRepository.GetByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
 }

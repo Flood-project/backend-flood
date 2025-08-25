@@ -2,6 +2,7 @@ package router
 
 import (
 	accountHandler "github.com/Flood-project/backend-flood/internal/account_user/handler"
+	loginHandler "github.com/Flood-project/backend-flood/internal/login/handler"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 )
@@ -30,5 +31,12 @@ func (s *Server) MountAccounts(handler *accountHandler.AccountHandler) {
 	s.Router.Route("/accounts", func(r chi.Router) {
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
+		r.Get("/{id}", handler.GetByID)
+	})
+}
+
+func (s *Server) MountLogin(handler *loginHandler.LoginHandler) {
+	s.Router.Route("/login", func(r chi.Router) {
+		r.Post("/", handler.Login)
 	})
 }
