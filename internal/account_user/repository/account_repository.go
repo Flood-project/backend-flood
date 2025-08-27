@@ -23,8 +23,8 @@ func NewAccountRepository(db *sqlx.DB) AccountRepository {
 }
 
 func (ur *accountRepository) Create(account *account_user.Account) error {
-	query := `INSERT INTO account (name, email, password_hash)
-		VALUES($1, $2, $3)
+	query := `INSERT INTO account (name, email, password_hash, id_user_group)
+		VALUES($1, $2, $3, $4)
 		RETURNING id`
 
 	err := ur.DB.QueryRow(
@@ -32,6 +32,7 @@ func (ur *accountRepository) Create(account *account_user.Account) error {
 		account.Name,
 		account.Email,
 		account.Password_hash,
+		account.IdUserGroup,
 	).Scan(&account.Id_account)
 
 	if err != nil {
@@ -42,7 +43,7 @@ func (ur *accountRepository) Create(account *account_user.Account) error {
 }
 
 func (ur *accountRepository) Fetch() (accounts []account_user.Account, err error) {
-	query := `SELECT id, name, email, password_hash FROM account`
+	query := `SELECT id, name, email, password_hash, id_user_group FROM account`
 
 	err = ur.DB.Select(&accounts, query)
 	if err != nil {
@@ -65,6 +66,7 @@ func (ur *accountRepository) GetByID(id int32) (*account_user.Account, error) {
 		&account.Name,
 		&account.Email,
 		&account.Password_hash,
+		&account.IdUserGroup,
 	)
 	if err != nil {
 		return nil, err
@@ -76,12 +78,12 @@ func (ur *accountRepository) GetByID(id int32) (*account_user.Account, error) {
 func (accountRepository *accountRepository) GetByEmail(email string) (*account_user.Account, error) {
 	var account account_user.Account
 
-	query := `SELECT email, password_hash FROM account WHERE email = $1`
+	query := `SELECT email, password_hash, id_user_group FROM account WHERE email = $1`
 
 	err := accountRepository.DB.QueryRow(
 		query,
 		email,
-	).Scan(&account.Email, &account.Password_hash)
+	).Scan(&account.Email, &account.Password_hash, &account.IdUserGroup)
 	if err != nil {
 		return nil, err
 	}

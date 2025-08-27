@@ -32,25 +32,30 @@ func (handler *AccountHandler) Create(response http.ResponseWriter, request *htt
 	err := json.NewDecoder(request.Body).Decode(&account)
 	if err != nil {
 		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(account.Password_hash), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 
 	hashedAccount := account_user.Account{
 		Name: account.Name,
 		Email: account.Email,
 		Password_hash: string(hashedPass),
+		IdUserGroup: account.IdUserGroup,
 	}
 
 	err = handler.accountUsecase.Create(&hashedAccount)
 	if err != nil {
 		http.Error(response, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	hashedAccount.Password_hash = ""
+	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 
 	err = json.NewEncoder(response).Encode(hashedAccount)
