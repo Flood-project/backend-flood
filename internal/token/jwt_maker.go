@@ -37,9 +37,6 @@ func (jwtToken *JWT) GenerateToken(account account_user.Account) (string, error)
 		return "", errors.New("erro ao gerar token")
 	}
 
-	log.Println(token)
-	log.Println(tokenString)
-
 	return tokenString, nil
 }
 

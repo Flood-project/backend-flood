@@ -78,12 +78,12 @@ func (ur *accountRepository) GetByID(id int32) (*account_user.Account, error) {
 func (accountRepository *accountRepository) GetByEmail(email string) (*account_user.Account, error) {
 	var account account_user.Account
 
-	query := `SELECT email, password_hash, id_user_group FROM account WHERE email = $1`
+	query := `SELECT id, email, password_hash, id_user_group FROM account WHERE email = $1`
 
 	err := accountRepository.DB.QueryRow(
 		query,
 		email,
-	).Scan(&account.Email, &account.Password_hash, &account.IdUserGroup)
+	).Scan(&account.Id_account, &account.Email, &account.Password_hash, &account.IdUserGroup)
 	if err != nil {
 		return nil, err
 	}

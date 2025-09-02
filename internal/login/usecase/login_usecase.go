@@ -2,8 +2,11 @@ package usecase
 
 import (
 	"errors"
-	"github.com/Flood-project/backend-flood/internal/account_user/repository"
+	"time"
+
+	accountRepository "github.com/Flood-project/backend-flood/internal/account_user/repository"
 	"github.com/Flood-project/backend-flood/internal/token"
+	tokenRepository "github.com/Flood-project/backend-flood/internal/token/repository"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -12,14 +15,16 @@ type LoginManager interface {
 }
 
 type loginUseCase struct {
-	accountRepository repository.AccountRepository
+	accountRepository accountRepository.AccountRepository
 	token             token.TokenManager
+	tokenRepository   tokenRepository.TokenRepository
 }
 
-func NewLogin(accountRepository repository.AccountRepository, token token.TokenManager) LoginManager{
+func NewLogin(accountRepository accountRepository.AccountRepository, token token.TokenManager, tokenRepository tokenRepository.TokenRepository) LoginManager {
 	return &loginUseCase{
 		accountRepository: accountRepository,
-		token: token,
+		token:             token,
+		tokenRepository: tokenRepository,
 	}
 }
 
@@ -37,6 +42,18 @@ func (loginUseCase *loginUseCase) Login(email, password string) (string, error) 
 	tokenString, err := loginUseCase.token.GenerateToken(*account)
 	if err != nil {
 		return "", errors.New("erro ao gerar token")
+	}
+
+	tokenWithGroupUser := token.Token{
+		RowToken: tokenString,
+		Created: time.Now().Local(),
+		Expiration: time.Now().Add(time.Hour * 24).Local(),
+		IdAccount: account.Id_account,
+	}
+
+	err = loginUseCase.tokenRepository.Create(&tokenWithGroupUser)
+	if err != nil {
+		return "", err
 	}
 
 	return tokenString, nil

@@ -3,15 +3,18 @@ package router
 import (
 	accountHandler "github.com/Flood-project/backend-flood/internal/account_user/handler"
 	loginHandler "github.com/Flood-project/backend-flood/internal/login/handler"
+	"github.com/Flood-project/backend-flood/internal/middleware"
+	"github.com/Flood-project/backend-flood/internal/token"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 )
 
 type Server struct {
 	Router *chi.Mux
+	TokenManager token.TokenManager
 }
 
-func CreateNewServer() *Server {
+func CreateNewServer(tokenKey token.TokenManager) *Server {
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
@@ -24,14 +27,22 @@ func CreateNewServer() *Server {
 	}))
 	return &Server{
 		Router: r,
+		TokenManager: tokenKey,
 	}
 }
 
 func (s *Server) MountAccounts(handler *accountHandler.AccountHandler) {
 	s.Router.Route("/accounts", func(r chi.Router) {
+		//middleware para todas as rotas de accounts
+		r.Use(middleware.CheckAuthentication(s.TokenManager))
+		
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
 		r.Get("/{id}", handler.GetByID)
+		// r.Group(func(r chi.Router) {
+		// 	r.Use(middleware.CheckAuthentication(s.TokenManager))
+		// 	r.Post("/exampleRoutesWithMiddleware", handler.Create)
+		// 	r.Get("/", handler.Fetch)
 	})
 }
 

@@ -8,11 +8,12 @@ import (
 
 	"github.com/Flood-project/backend-flood/config"
 	accountHandler "github.com/Flood-project/backend-flood/internal/account_user/handler"
-	"github.com/Flood-project/backend-flood/internal/account_user/repository"
+	accountRepository "github.com/Flood-project/backend-flood/internal/account_user/repository"
 	accountUseCase "github.com/Flood-project/backend-flood/internal/account_user/usecase"
 	loginHandler "github.com/Flood-project/backend-flood/internal/login/handler"
 	loginUseCase "github.com/Flood-project/backend-flood/internal/login/usecase"
 	"github.com/Flood-project/backend-flood/internal/token"
+	tokenRepository "github.com/Flood-project/backend-flood/internal/token/repository"
 	"github.com/Flood-project/backend-flood/pkg/router"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -29,14 +30,16 @@ func main() {
 	secretKey := os.Getenv("SECRET_KEY")
 	tokenManager := token.NewJWT(secretKey)
 
-	accountRepository := repository.NewAccountRepository(db)
+	accountRepository := accountRepository.NewAccountRepository(db)
 	accountUsecase := accountUseCase.AccountUseCase(accountRepository)	
 	accountHandler := accountHandler.NewAccountHandler(accountUsecase, tokenManager)
 
-	loginUseCase := loginUseCase.NewLogin(accountRepository, tokenManager)
+	tokenRepository := tokenRepository.NewTokenRepository(db)
+
+	loginUseCase := loginUseCase.NewLogin(accountRepository, tokenManager, tokenRepository)
 	loginHandler := loginHandler.NewLoginHandler(loginUseCase)
 
-	server := router.CreateNewServer()
+	server := router.CreateNewServer(tokenManager)
 	server.MountAccounts(accountHandler)
 	server.MountLogin(loginHandler)
 
