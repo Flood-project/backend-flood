@@ -4,13 +4,14 @@ import (
 	accountHandler "github.com/Flood-project/backend-flood/internal/account_user/handler"
 	loginHandler "github.com/Flood-project/backend-flood/internal/login/handler"
 	"github.com/Flood-project/backend-flood/internal/middleware"
+	productHandler "github.com/Flood-project/backend-flood/internal/product/handler"
 	"github.com/Flood-project/backend-flood/internal/token"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 )
 
 type Server struct {
-	Router *chi.Mux
+	Router       *chi.Mux
 	TokenManager token.TokenManager
 }
 
@@ -26,7 +27,7 @@ func CreateNewServer(tokenKey token.TokenManager) *Server {
 		MaxAge:           300,
 	}))
 	return &Server{
-		Router: r,
+		Router:       r,
 		TokenManager: tokenKey,
 	}
 }
@@ -35,7 +36,7 @@ func (s *Server) MountAccounts(handler *accountHandler.AccountHandler) {
 	s.Router.Route("/accounts", func(r chi.Router) {
 		//middleware para todas as rotas de accounts
 		r.Use(middleware.CheckAuthentication(s.TokenManager))
-		
+
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
 		r.Get("/{id}", handler.GetByID)
@@ -49,5 +50,12 @@ func (s *Server) MountAccounts(handler *accountHandler.AccountHandler) {
 func (s *Server) MountLogin(handler *loginHandler.LoginHandler) {
 	s.Router.Route("/login", func(r chi.Router) {
 		r.Post("/", handler.Login)
+	})
+}
+
+func (s *Server) MountProducts(handler *productHandler.ProductHandler) {
+	s.Router.Route("/products", func(r chi.Router) {
+		r.Post("/", handler.Create)
+		r.Get("/", handler.Fetch)
 	})
 }

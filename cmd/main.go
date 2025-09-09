@@ -12,6 +12,9 @@ import (
 	accountUseCase "github.com/Flood-project/backend-flood/internal/account_user/usecase"
 	loginHandler "github.com/Flood-project/backend-flood/internal/login/handler"
 	loginUseCase "github.com/Flood-project/backend-flood/internal/login/usecase"
+	productHandler "github.com/Flood-project/backend-flood/internal/product/handler"
+	productRepository "github.com/Flood-project/backend-flood/internal/product/repository"
+	productUseCase "github.com/Flood-project/backend-flood/internal/product/usecase"
 	"github.com/Flood-project/backend-flood/internal/token"
 	tokenRepository "github.com/Flood-project/backend-flood/internal/token/repository"
 	"github.com/Flood-project/backend-flood/pkg/router"
@@ -39,9 +42,14 @@ func main() {
 	loginUseCase := loginUseCase.NewLogin(accountRepository, tokenManager, tokenRepository)
 	loginHandler := loginHandler.NewLoginHandler(loginUseCase)
 
+	productRepository := productRepository.NewProductManager(db)
+	productUseCase := productUseCase.NewProductUseCase(&productRepository)
+	productHandler := productHandler.NewProductHandler(productUseCase)
+
 	server := router.CreateNewServer(tokenManager)
 	server.MountAccounts(accountHandler)
 	server.MountLogin(loginHandler)
+	server.MountProducts(productHandler)
 
 	log.Println("running on :8080")
 	http.ListenAndServe(":8080", server.Router)
