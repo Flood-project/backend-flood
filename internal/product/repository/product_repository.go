@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/Flood-project/backend-flood/internal/product"
 	"github.com/jmoiron/sqlx"
 )
@@ -8,9 +10,9 @@ import (
 type ProductManager interface {
 	Create(product *product.Produt) error
 	Fetch() ([]product.Produt, error)
-	// GetByID(id int32) (*product.Produt, error)
-	// Update(id int32, product *product.Produt) (*product.Produt, error)
-	// Delete(id int32) error
+	GetByID(id int32) (*product.Produt, error)
+	Update(id int32, product *product.Produt) error
+	Delete(id int32) error
 }
 
 type productManager struct {
@@ -87,4 +89,47 @@ func (productManager *productManager) GetByID(id int32) (*product.Produt, error)
 	}
 
 	return &product, err
+}
+
+func (productManager *productManager) Update(id int32, product *product.Produt) error {
+	query := `UPDATE products SET name=$1, description=$2, id_bucha=$3, id_acionamento=$4, id_base=$5, capacidade=$6, valor=$7 WHERE id=$8`
+
+	res, err := productManager.DB.Exec(
+		query,
+		product.Name,
+		product.Description,
+		product.Id_bucha,
+		product.Id_acionamento,
+		product.Id_base,
+		product.Capacity,
+		product.Value,
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("Error: Nenhum produto foi modificado.")
+	}
+
+	return nil
+}
+
+func (productManager *productManager) Delete(id int32) error {
+	query := `DELETE FROM products WHERE id=$1`
+
+	err := productManager.DB.QueryRow(
+		query,
+		id,
+	)
+	if err != nil {
+		return nil
+	}
+	return nil
 }

@@ -57,5 +57,8 @@ func (s *Server) MountProducts(handler *productHandler.ProductHandler) {
 	s.Router.Route("/products", func(r chi.Router) {
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
+		r.Get("/{id}", handler.GetByID)
+		r.Put("/{id}", handler.Update)
+		r.Delete("/{id}", handler.Delete)
 	})
 }
