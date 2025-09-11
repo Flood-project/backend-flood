@@ -27,19 +27,22 @@ func NewProductManager(db *sqlx.DB) ProductManager {
 
 func (productManager *productManager) Create(product *product.Produt) error {
 	query := `INSERT INTO products (
-		name, description, id_bucha, id_acionamento, id_base, capacidade, valor
-	) VALUES ($1, $2, $3, $4, $5, $6, $7)
+		codigo, description, capacidade_estatica, capacidade_trabalho, reducao, altura_bucha, curso, id_bucha, id_acionamento, id_base
+	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	RETURNING id`
 
 	err := productManager.DB.QueryRow(
 		query,
-		product.Name,
+		product.Codigo,
 		product.Description,
+		product.CapacidadeEstatica,
+		product.CapacidadeTrabalho,
+		product.Reducao,
+		product.AlturaBucha,
+		product.Curso,
 		product.Id_bucha,
 		product.Id_acionamento,
 		product.Id_base,
-		product.Capacity,
-		product.Value,
 	).Scan(&product.Id)
 	if err != nil {
 		return err
@@ -50,7 +53,7 @@ func (productManager *productManager) Create(product *product.Produt) error {
 
 func (productManager *productManager) Fetch() ([]product.Produt, error) {
 	query := `SELECT 
-		id, name, description, id_bucha, id_acionamento, id_base, capacidade, valor
+		id, codigo, description, capacidade_estatica, capacidade_trabalho, reducao, altura_bucha, curso, id_bucha, id_acionamento, id_base
 		FROM products`
 	
 	var products []product.Produt
@@ -68,20 +71,23 @@ func (productManager *productManager) Fetch() ([]product.Produt, error) {
 
 func (productManager *productManager) GetByID(id int32) (*product.Produt, error) {
 	var product product.Produt
-	query := `SELECT id, name, description, id_bucha, id_acionamento, id_base, capacidade, valor FROM products WHERE id = $1`
+	query := `SELECT id, codigo, description, capacidade_estatica, capacidade_trabalho, reducao, altura_bucha, curso, id_bucha, id_acionamento, id_base FROM products WHERE id = $1`
 
 	err := productManager.DB.QueryRow(
 		query,
 		id,
 	).Scan(
 		&product.Id, 
-		&product.Name,
+		&product.Codigo,
 		&product.Description,
+		&product.CapacidadeEstatica,
+		&product.CapacidadeTrabalho,
+		&product.Reducao,
+		&product.AlturaBucha,
+		&product.Curso,
 		&product.Id_bucha,
 		&product.Id_acionamento,
 		&product.Id_base,
-		&product.Capacity,
-		&product.Value,
 	)
 
 	if err != nil {
@@ -92,17 +98,20 @@ func (productManager *productManager) GetByID(id int32) (*product.Produt, error)
 }
 
 func (productManager *productManager) Update(id int32, product *product.Produt) error {
-	query := `UPDATE products SET name=$1, description=$2, id_bucha=$3, id_acionamento=$4, id_base=$5, capacidade=$6, valor=$7 WHERE id=$8`
+	query := `UPDATE products SET codigo=$1, description=$2, capacidade_estatica=$3, capacidade_trabalho=$4, reducao=$5, altura_bucha=$6, curso=$7, id_bucha=$8, id_acionamento=$9, id_base=$10 WHERE id=$11`
 
 	res, err := productManager.DB.Exec(
 		query,
-		product.Name,
+		product.Codigo,
 		product.Description,
+		product.CapacidadeEstatica,
+		product.CapacidadeTrabalho,
+		product.Reducao,
+		product.AlturaBucha,
+		product.Curso,
 		product.Id_bucha,
 		product.Id_acionamento,
 		product.Id_base,
-		product.Capacity,
-		product.Value,
 		id,
 	)
 	if err != nil {
