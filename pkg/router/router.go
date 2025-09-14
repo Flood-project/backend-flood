@@ -6,6 +6,7 @@ import (
 	"github.com/Flood-project/backend-flood/internal/middleware"
 	productHandler "github.com/Flood-project/backend-flood/internal/product/handler"
 	"github.com/Flood-project/backend-flood/internal/token"
+	tokenHandler "github.com/Flood-project/backend-flood/internal/token/handler"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 )
@@ -47,9 +48,10 @@ func (s *Server) MountAccounts(handler *accountHandler.AccountHandler) {
 	})
 }
 
-func (s *Server) MountLogin(handler *loginHandler.LoginHandler) {
+func (s *Server) MountLogin(handler *loginHandler.LoginHandler, tokenHandler *tokenHandler.TokenHandler) {
 	s.Router.Route("/login", func(r chi.Router) {
 		r.Post("/", handler.Login)
+		r.Post("/refresh", tokenHandler.RefreshToken)
 	})
 }
 

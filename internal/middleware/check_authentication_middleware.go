@@ -11,7 +11,7 @@ import (
 func UserUnathorized(response http.ResponseWriter) {
 	response.WriteHeader(http.StatusUnauthorized)
 	json.NewEncoder(response).Encode(map[string]string{
-		"error:": "unauthorized",
+		"erro": "sem permissão",
 	})
 }
 
@@ -26,8 +26,13 @@ func CheckAuthentication(tokenManager token.TokenManager) func(http.Handler) htt
 
 			accessTokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-			_, err := tokenManager.ValidateToken(accessTokenString)
+			token, err := tokenManager.ValidateToken(accessTokenString)
 			if err != nil {
+				UserUnathorized(response)
+				return
+			}
+
+			if token.Type != "access" {
 				UserUnathorized(response)
 				return
 			}
