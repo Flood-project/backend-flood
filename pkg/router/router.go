@@ -2,6 +2,7 @@ package router
 
 import (
 	accountHandler "github.com/Flood-project/backend-flood/internal/account_user/handler"
+	acionamentoHandler "github.com/Flood-project/backend-flood/internal/acionameto/handler"
 	loginHandler "github.com/Flood-project/backend-flood/internal/login/handler"
 	"github.com/Flood-project/backend-flood/internal/middleware"
 	productHandler "github.com/Flood-project/backend-flood/internal/product/handler"
@@ -59,6 +60,14 @@ func (s *Server) MountProducts(handler *productHandler.ProductHandler) {
 		r.Get("/", handler.Fetch)
 		r.Get("/{id}", handler.GetByID)
 		r.Put("/{id}", handler.Update)
+		r.Delete("/{id}", handler.Delete)
+	})
+}
+
+func (s *Server) MountAcionamentos(handler *acionamentoHandler.AcionamentoHandler) {
+	s.Router.Route("/acionamentos", func(r chi.Router) {
+		r.Post("/", handler.Create)
+		r.Get("/", handler.Fetch)
 		r.Delete("/{id}", handler.Delete)
 	})
 }

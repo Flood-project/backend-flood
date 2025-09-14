@@ -10,6 +10,9 @@ import (
 	accountHandler "github.com/Flood-project/backend-flood/internal/account_user/handler"
 	accountRepository "github.com/Flood-project/backend-flood/internal/account_user/repository"
 	accountUseCase "github.com/Flood-project/backend-flood/internal/account_user/usecase"
+	acionamentoHandler "github.com/Flood-project/backend-flood/internal/acionameto/handler"
+	acionamentoRepository "github.com/Flood-project/backend-flood/internal/acionameto/repository"
+	acionamentoUseCase "github.com/Flood-project/backend-flood/internal/acionameto/usecase"
 	loginHandler "github.com/Flood-project/backend-flood/internal/login/handler"
 	loginUseCase "github.com/Flood-project/backend-flood/internal/login/usecase"
 	productHandler "github.com/Flood-project/backend-flood/internal/product/handler"
@@ -46,10 +49,15 @@ func main() {
 	productUseCase := productUseCase.NewProductUseCase(&productRepository)
 	productHandler := productHandler.NewProductHandler(productUseCase)
 
+	acionamentoRepository := acionamentoRepository.NewAcionamentoManagement(db)
+	acionamentoUseCase := acionamentoUseCase.NewAcionamentoUseCase(acionamentoRepository)
+	acionamentoHandler := acionamentoHandler.NewAcionamentoHandler(acionamentoUseCase)
+
 	server := router.CreateNewServer(tokenManager)
 	server.MountAccounts(accountHandler)
 	server.MountLogin(loginHandler)
 	server.MountProducts(productHandler)
+	server.MountAcionamentos(acionamentoHandler)
 
 	log.Println("running on :8080")
 	http.ListenAndServe(":8080", server.Router)
