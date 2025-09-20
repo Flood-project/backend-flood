@@ -13,6 +13,9 @@ import (
 	buchaHandler "github.com/Flood-project/backend-flood/internal/bucha/handler"
 	buchaRepository "github.com/Flood-project/backend-flood/internal/bucha/repository"
 	buchaUseCase "github.com/Flood-project/backend-flood/internal/bucha/usecase"
+	acionamentoHandler "github.com/Flood-project/backend-flood/internal/acionameto/handler"
+	acionamentoRepository "github.com/Flood-project/backend-flood/internal/acionameto/repository"
+	acionamentoUseCase "github.com/Flood-project/backend-flood/internal/acionameto/usecase"
 	loginHandler "github.com/Flood-project/backend-flood/internal/login/handler"
 	loginUseCase "github.com/Flood-project/backend-flood/internal/login/usecase"
 	productHandler "github.com/Flood-project/backend-flood/internal/product/handler"
@@ -55,12 +58,17 @@ func main() {
 	buchaRepository := buchaRepository.NewBuchaManager(db)
 	buchaUseCase := buchaUseCase.NewBuchaUseCase(buchaRepository)
 	buchaHandler := buchaHandler.NewBuchaHandler(buchaUseCase)
+	
+	acionamentoRepository := acionamentoRepository.NewAcionamentoManagement(db)
+	acionamentoUseCase := acionamentoUseCase.NewAcionamentoUseCase(acionamentoRepository)
+	acionamentoHandler := acionamentoHandler.NewAcionamentoHandler(acionamentoUseCase)
 
 	server := router.CreateNewServer(tokenManager)
 	server.MountAccounts(accountHandler)
 	server.MountLogin(loginHandler, &tokenHandler)
 	server.MountProducts(productHandler)
 	server.MountBuchas(buchaHandler)
+	server.MountAcionamentos(acionamentoHandler)
 
 	log.Println("running on :8080")
 	http.ListenAndServe(":8080", server.Router)
