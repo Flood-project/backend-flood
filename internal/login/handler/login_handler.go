@@ -28,16 +28,19 @@ func (handler *LoginHandler) Login(response http.ResponseWriter, request *http.R
 		return
 	}
 
-	account, err := handler.loginUseCase.Login(req.Email, req.Password)
+	token, refreshToken, err := handler.loginUseCase.Login(req.Email, req.Password)
 	if err != nil {
 		http.Error(response, "Email ou senha incorretos. Tente novamente.", http.StatusUnauthorized)
 		return
 	}
 
 	response.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(response).Encode(&account)
+	err = json.NewEncoder(response).Encode(map[string] string{
+		"token": token,
+		"refresh_token": refreshToken,
+	})
 	if err != nil {
 		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
-	}
+	}	
 }

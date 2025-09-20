@@ -16,6 +16,7 @@ import (
 	productRepository "github.com/Flood-project/backend-flood/internal/product/repository"
 	productUseCase "github.com/Flood-project/backend-flood/internal/product/usecase"
 	"github.com/Flood-project/backend-flood/internal/token"
+	tokenHandler "github.com/Flood-project/backend-flood/internal/token/handler"
 	tokenRepository "github.com/Flood-project/backend-flood/internal/token/repository"
 	"github.com/Flood-project/backend-flood/pkg/router"
 	"github.com/joho/godotenv"
@@ -46,9 +47,11 @@ func main() {
 	productUseCase := productUseCase.NewProductUseCase(&productRepository)
 	productHandler := productHandler.NewProductHandler(productUseCase)
 
+	tokenHandler := tokenHandler.NewTokenHandler(tokenManager, accountUsecase)
+
 	server := router.CreateNewServer(tokenManager)
 	server.MountAccounts(accountHandler)
-	server.MountLogin(loginHandler)
+	server.MountLogin(loginHandler, &tokenHandler)
 	server.MountProducts(productHandler)
 
 	log.Println("running on :8080")

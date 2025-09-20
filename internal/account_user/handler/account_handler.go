@@ -89,12 +89,14 @@ func (handler *AccountHandler) Fetch(response http.ResponseWriter, request *http
 	accounts, err := handler.accountUsecase.Fetch()
 	if err != nil {
 		http.Error(response, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	response.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(response).Encode(&accounts)
 	if err != nil {
 		http.Error(response, "Erro nos dados json", http.StatusBadRequest)
+		return
 	}
 }
 

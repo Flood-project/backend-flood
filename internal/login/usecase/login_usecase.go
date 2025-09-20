@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"errors"
-	"time"
 
 	accountRepository "github.com/Flood-project/backend-flood/internal/account_user/repository"
 	"github.com/Flood-project/backend-flood/internal/token"
@@ -11,7 +10,7 @@ import (
 )
 
 type LoginManager interface {
-	Login(email, password string) (string, error)
+	Login(email, password string) (string, string, error)
 }
 
 type loginUseCase struct {
@@ -24,37 +23,37 @@ func NewLogin(accountRepository accountRepository.AccountRepository, token token
 	return &loginUseCase{
 		accountRepository: accountRepository,
 		token:             token,
-		tokenRepository: tokenRepository,
+		tokenRepository:   tokenRepository,
 	}
 }
 
-func (loginUseCase *loginUseCase) Login(email, password string) (string, error) {
+func (loginUseCase *loginUseCase) Login(email, password string) (string, string, error) {
 	account, err := loginUseCase.accountRepository.GetByEmail(email)
 	if err != nil {
-		return "", errors.New("nenhum email encontrado")
+		return "", "", errors.New("nenhum email encontrado")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password_hash), []byte(password))
 	if err != nil {
-		return "", errors.New("senha inválida")
+		return "", "", errors.New("senha inválida")
 	}
 
-	tokenString, err := loginUseCase.token.GenerateToken(*account)
+	tokenString, refreshToken, err := loginUseCase.token.GenerateToken(*account)
 	if err != nil {
-		return "", errors.New("erro ao gerar token")
+		return "", "", errors.New("erro ao gerar token")
 	}
 
-	tokenWithGroupUser := token.Token{
-		RowToken: tokenString,
-		Created: time.Now().Local(),
-		Expiration: time.Now().Add(time.Hour * 24).Local(),
-		IdAccount: account.Id_account,
-	}
+	// tokenWithGroupUser := token.Token{
+	// 	RowToken: tokenString,
+	// 	Created: time.Now().Local(),
+	// 	Expiration: time.Now().Add(time.Hour * 24).Local(),
+	// 	IdAccount: account.Id_account,
+	// }
 
-	err = loginUseCase.tokenRepository.Create(&tokenWithGroupUser)
-	if err != nil {
-		return "", err
-	}
+	// err = loginUseCase.tokenRepository.Create(&tokenWithGroupUser)
+	// if err != nil {
+	// 	return "", err
+	// }
 
-	return tokenString, nil
+	return tokenString, refreshToken, nil
 }

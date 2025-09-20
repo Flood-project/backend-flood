@@ -2,16 +2,17 @@ package token
 
 import (
 	"errors"
-	"log"
+	"fmt"
 	"time"
 	"github.com/Flood-project/backend-flood/internal/account_user"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
+	//"github.com/google/uuid"
 )
 
 type TokenManager interface {
-	GenerateToken(account account_user.Account) (string, error)
-	ValidateToken(tokenString string) (string, error)
+	GenerateToken(account account_user.Account) (string, string, error)
+	ValidateToken(tokenString string) (*CustomClaims, error)
+	ValidateRefreshToken(token string) (*RefreshTokenCustomClaims, error)
 }
 
 type JWT struct {
@@ -24,47 +25,82 @@ func NewJWT(secretKey string) TokenManager {
 	}
 }
 
-func (jwtToken *JWT) GenerateToken(account account_user.Account) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email": account.Email,
-		"exp":   time.Now().Add(time.Hour * 24).Unix(),
-		"iat":   time.Now().Unix(),
-		"jti":   uuid.NewString(), //unique token
-	})
+func (jwtToken *JWT) GenerateToken(account account_user.Account) (string, string, error) {
+	claims := &CustomClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(5 * time.Minute)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ID:        fmt.Sprintf("%d", account.Id_account),
+		},
+		IdUser:    account.Id_account,
+		Email:     account.Email,
+		UserGroup: account.IdUserGroup,
+		Type: "access",
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	tokenString, err := token.SignedString([]byte(jwtToken.secretKey))
 	if err != nil {
-		return "", errors.New("erro ao gerar token")
+		return "", "", errors.New("erro ao gerar token")
 	}
 
-	return tokenString, nil
+	// refreshToken
+	refreshClaims := &RefreshTokenCustomClaims{
+		IdUser: account.Id_account,
+		Type: "refresh",
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+		},
+	}
+
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
+	refreshJwt, err := refreshToken.SignedString([]byte(jwtToken.secretKey))
+	if err != nil {
+		return "", "", errors.New("erro ao gerar refresh token")
+	}
+
+	return tokenString, refreshJwt, nil
 }
 
-func (jwtToken *JWT) ValidateToken(tokenString string) (string, error) {
-	jwtClaims := jwt.MapClaims{}
+func (jwtToken *JWT) ValidateToken(tokenString string) (*CustomClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{},
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte(jwtToken.secretKey), nil
+		})
+	if err != nil {
+		return nil, err
+	}
 
-	tokenVerified, err := jwt.ParseWithClaims(tokenString, jwtClaims, func(token *jwt.Token) (any, error) {
+	if !token.Valid {
+		return nil, errors.New("token inválido")
+	}
+
+	claims, ok := token.Claims.(*CustomClaims)
+	if !ok {
+		return nil, errors.New("erro ao receber claims do token")
+	}
+
+	return claims, nil
+}
+
+func (jwtToken *JWT) ValidateRefreshToken(tokenString string) (*RefreshTokenCustomClaims, error) {
+	refreshToken, err := jwt.ParseWithClaims(tokenString, &RefreshTokenCustomClaims{},
+	func(token *jwt.Token) (interface{}, error) {
 		return []byte(jwtToken.secretKey), nil
 	})
 	if err != nil {
-		log.Println("erro jwt.Parse: ", err)
-		return "", errors.New("erro ao validar token")
+		return nil, err
 	}
 
-	if !tokenVerified.Valid {
-		return "", errors.New("token inválido")
+	if !refreshToken.Valid {
+		return nil, errors.New("token inválido")
 	}
 
-	claims, ok := tokenVerified.Claims.(jwt.MapClaims)
+	RefreshClaims, ok := refreshToken.Claims.(*RefreshTokenCustomClaims)
 	if !ok {
-		log.Println("claims: ", claims)
-		return "", errors.New("erro ao receber claims do token")
+		return nil, errors.New("erro ao receber claims do token")
 	}
 
-	email, ok := claims["email"].(string)
-	if !ok {
-		return "", errors.New("email não encontrado no token")
-	}
-
-	return email, nil
+	return RefreshClaims, nil
 }

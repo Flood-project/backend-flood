@@ -56,7 +56,7 @@ func (ur *accountRepository) Fetch() (accounts []account_user.Account, err error
 func (ur *accountRepository) GetByID(id int32) (*account_user.Account, error) {
 	var account account_user.Account
 
-	query := `SELECT id, name, email, password_hash FROM account WHERE id = $1`
+	query := `SELECT id, name, email, password_hash, id_user_group FROM account WHERE id = $1`
 
 	err := ur.DB.QueryRow(
 		query,
