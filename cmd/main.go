@@ -10,6 +10,9 @@ import (
 	accountHandler "github.com/Flood-project/backend-flood/internal/account_user/handler"
 	accountRepository "github.com/Flood-project/backend-flood/internal/account_user/repository"
 	accountUseCase "github.com/Flood-project/backend-flood/internal/account_user/usecase"
+	buchaHandler "github.com/Flood-project/backend-flood/internal/bucha/handler"
+	buchaRepository "github.com/Flood-project/backend-flood/internal/bucha/repository"
+	buchaUseCase "github.com/Flood-project/backend-flood/internal/bucha/usecase"
 	loginHandler "github.com/Flood-project/backend-flood/internal/login/handler"
 	loginUseCase "github.com/Flood-project/backend-flood/internal/login/usecase"
 	productHandler "github.com/Flood-project/backend-flood/internal/product/handler"
@@ -48,11 +51,16 @@ func main() {
 	productHandler := productHandler.NewProductHandler(productUseCase)
 
 	tokenHandler := tokenHandler.NewTokenHandler(tokenManager, accountUsecase)
+	
+	buchaRepository := buchaRepository.NewBuchaManager(db)
+	buchaUseCase := buchaUseCase.NewBuchaUseCase(buchaRepository)
+	buchaHandler := buchaHandler.NewBuchaHandler(buchaUseCase)
 
 	server := router.CreateNewServer(tokenManager)
 	server.MountAccounts(accountHandler)
 	server.MountLogin(loginHandler, &tokenHandler)
 	server.MountProducts(productHandler)
+	server.MountBuchas(buchaHandler)
 
 	log.Println("running on :8080")
 	http.ListenAndServe(":8080", server.Router)
