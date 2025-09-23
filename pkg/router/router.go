@@ -42,6 +42,7 @@ func (s *Server) MountAccounts(handler *accountHandler.AccountHandler) {
 		r.Use(middleware.CheckAuthentication(s.TokenManager))
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
+		r.Get("/groupid", handler.FetchWithUserGroup)
 		r.Get("/{id}", handler.GetByID)
 		// r.Group(func(r chi.Router) {
 		// 	r.Use(middleware.CheckAuthentication(s.TokenManager))
