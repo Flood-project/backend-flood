@@ -2,7 +2,6 @@ package repository
 
 import (
 	"fmt"
-
 	"github.com/Flood-project/backend-flood/internal/product"
 	"github.com/jmoiron/sqlx"
 )
@@ -10,6 +9,7 @@ import (
 type ProductManager interface {
 	Create(product *product.Produt) error
 	Fetch() ([]product.Produt, error)
+	FetchWithComponents() ([]product.ProductWithComponents, error)
 	GetByID(id int32) (*product.Produt, error)
 	Update(id int32, product *product.Produt) error
 	Delete(id int32) error
@@ -42,7 +42,7 @@ func (productManager *productManager) Create(product *product.Produt) error {
 		product.Curso,
 		product.Id_bucha,
 		product.Id_acionamento,
-		product.Id_base,
+		//product.Id_base,
 	).Scan(&product.Id)
 	if err != nil {
 		return err
@@ -69,6 +69,43 @@ func (productManager *productManager) Fetch() ([]product.Produt, error) {
 	return products, nil
 }
 
+func (productManager *productManager) FetchWithComponents() ([]product.ProductWithComponents, error) {
+	query := `SELECT 
+				p.id,
+				p.codigo,
+				p.description,
+				p.capacidade_estatica,
+				p.capacidade_trabalho,
+				p.reducao,
+				p.altura_bucha,
+				p.curso,
+				b.id AS id_bucha,
+				b.tipobucha AS tipo_bucha,
+				a.id AS id_acionamento,
+				a.tipoacionamento AS tipo_do_acionamento,
+				base.id AS id_base,
+				base.tipoBase AS tipo_base
+			  FROM products p
+			  INNER JOIN buchas b
+				ON b.id = p.id_bucha
+			  INNER JOIN acionamentos a
+				ON a.id = p.id_acionamento
+			  INNER JOIN bases base
+			  	ON base.id = p.id_base`
+	
+	var productsWithComponents []product.ProductWithComponents
+
+	err := productManager.DB.Select(
+		&productsWithComponents,
+		query,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return productsWithComponents, nil
+}
+
 func (productManager *productManager) GetByID(id int32) (*product.Produt, error) {
 	var product product.Produt
 	query := `SELECT id, codigo, description, capacidade_estatica, capacidade_trabalho, reducao, altura_bucha, curso, id_bucha, id_acionamento, id_base FROM products WHERE id = $1`
@@ -87,7 +124,7 @@ func (productManager *productManager) GetByID(id int32) (*product.Produt, error)
 		&product.Curso,
 		&product.Id_bucha,
 		&product.Id_acionamento,
-		&product.Id_base,
+		
 	)
 
 	if err != nil {
@@ -111,7 +148,7 @@ func (productManager *productManager) Update(id int32, product *product.Produt) 
 		product.Curso,
 		product.Id_bucha,
 		product.Id_acionamento,
-		product.Id_base,
+		//product.Id_base,
 		id,
 	)
 	if err != nil {

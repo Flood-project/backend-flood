@@ -8,6 +8,7 @@ import (
 type ProductUseCase interface {
 	Create(product *product.Produt) error
 	Fetch() ([]product.Produt, error)
+	FetchWithComponents() ([]product.ProductWithComponents, error)
 	GetByID(id int32) (*product.Produt, error)
 	Update(id int32, product *product.Produt) error
 	Delete(id int32) error
@@ -38,6 +39,15 @@ func (productUseCase *productUseCase) Fetch() ([]product.Produt, error) {
 	}
 
 	return products, err
+}
+
+func (productUseCase *productUseCase) FetchWithComponents() ([]product.ProductWithComponents, error) {
+	productsWithComponents, err := productUseCase.productRepository.FetchWithComponents()
+	if err != nil {
+		return nil, err
+	}
+
+	return productsWithComponents, err
 }
 
 func (productUseCase *productUseCase) GetByID(id int32) (*product.Produt, error) {
