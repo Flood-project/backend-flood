@@ -124,7 +124,7 @@ func (productManager *productManager) GetByID(id int32) (*product.Produt, error)
 		&product.Curso,
 		&product.Id_bucha,
 		&product.Id_acionamento,
-		
+		&product.Id_base,
 	)
 
 	if err != nil {
