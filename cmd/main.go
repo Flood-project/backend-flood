@@ -27,6 +27,9 @@ import (
 	"github.com/Flood-project/backend-flood/internal/token"
 	tokenHandler "github.com/Flood-project/backend-flood/internal/token/handler"
 	tokenRepository "github.com/Flood-project/backend-flood/internal/token/repository"
+	objectStoreRepository "github.com/Flood-project/backend-flood/internal/object_store/repository"
+	objectStoreUseCase "github.com/Flood-project/backend-flood/internal/object_store/usecase"
+	objectStoreHandler "github.com/Flood-project/backend-flood/internal/object_store/handler"
 	"github.com/Flood-project/backend-flood/pkg/router"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -37,8 +40,13 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	
+
 	db := config.ConnectDB()
+
+	minIOConn, err := config.NewMinIO()
+	if err != nil {
+		log.Println("erro na conexão", err)
+	}
 
 	secretKey := os.Getenv("SECRET_KEY")
 	tokenManager := token.NewJWT(secretKey)
@@ -70,6 +78,10 @@ func main() {
 	baseUseCase := baseUseCase.NewBaseUseCase(baseRepository)
 	baseHandler := handler.NewBaseHandler(baseUseCase)
 
+	objectStoreRepository := objectStoreRepository.NewObjectStoreUseCase(db)
+	objectStoreUseCase := objectStoreUseCase.NewObjectStoreUseCase(objectStoreRepository, *minIOConn)
+	objectStoreHandler := objectStoreHandler.NewObjectStoreHandler(objectStoreUseCase)
+
 	server := router.CreateNewServer(tokenManager)
 	server.MountAccounts(accountHandler)
 	server.MountLogin(loginHandler, &tokenHandler)
@@ -77,7 +89,9 @@ func main() {
 	server.MountBuchas(buchaHandler)
 	server.MountAcionamentos(acionamentoHandler)
 	server.MountBase(baseHandler)
+	server.MountObjectStore(objectStoreHandler)
 
 	log.Println("running on :8080")
+	log.Println("minIO running on :9000", minIOConn)
 	http.ListenAndServe(":8080", server.Router)
 }
