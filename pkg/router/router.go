@@ -10,6 +10,7 @@ import (
 	productHandler "github.com/Flood-project/backend-flood/internal/product/handler"
 	"github.com/Flood-project/backend-flood/internal/token"
 	tokenHandler "github.com/Flood-project/backend-flood/internal/token/handler"
+	ObjectStoreHandler "github.com/Flood-project/backend-flood/internal/object_store/handler"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 )
@@ -87,5 +88,13 @@ func (s *Server) MountBuchas(handler *buchaHandler.BuchaHandler) {
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
 		r.Delete("/{id}", handler.Delete)
+	})
+}
+
+func (s *Server) MountObjectStore(handler *ObjectStoreHandler.ObjectStoreHandler) {
+	s.Router.Route("/files", func(r chi.Router) {
+		r.Use(middleware.CheckAuthentication(s.TokenManager))
+		r.Get("/", handler.Fetch)
+		r.Post("/", handler.Create)
 	})
 }
