@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -54,6 +55,23 @@ func (handler *ProductHandler) Fetch(response http.ResponseWriter, request *http
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(response).Encode(&products)
+	if err != nil {
+		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+}
+
+func (handler *ProductHandler) FetchWithComponents(response http.ResponseWriter, request *http.Request) {
+	productsWithComponents, err := handler.productUseCase.FetchWithComponents()
+	if err != nil {
+		log.Println(err, productsWithComponents)
+		http.Error(response, "Erro ao listar produtos com componentes", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(response).Encode(&productsWithComponents)
 	if err != nil {
 		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return

@@ -2,9 +2,11 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
 	"github.com/Flood-project/backend-flood/internal/account_user"
 	"github.com/Flood-project/backend-flood/internal/account_user/usecase"
 	"github.com/Flood-project/backend-flood/internal/token"
@@ -69,12 +71,14 @@ func (handler *AccountHandler) Fetch(response http.ResponseWriter, request *http
 
 	tokenHeader:= request.Header.Get("Authorization")
 	if tokenHeader == "" {
+		log.Println("entra aqui? ")
 		http.Error(response, "Usuário não autorizado.", http.StatusUnauthorized)
 		return
 	}
 
 	parts := strings.Split(tokenHeader, " ")
 	if len(parts) != 2 || parts[0] != "Bearer" {
+		log.Println("entra aqui? 2", parts)
 		http.Error(response, "Formato do token inválido.", http.StatusUnauthorized)
 		return
 	}
@@ -96,6 +100,22 @@ func (handler *AccountHandler) Fetch(response http.ResponseWriter, request *http
 	err = json.NewEncoder(response).Encode(&accounts)
 	if err != nil {
 		http.Error(response, "Erro nos dados json", http.StatusBadRequest)
+		return
+	}
+}
+
+func (handler *AccountHandler) FetchWithUserGroup(response http.ResponseWriter, request *http.Request) {
+	products, err := handler.accountUsecase.FetchWithUserGroup()
+	if err != nil {
+		http.Error(response, "Erro ao listar contas com grupo de usuário", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(response).Encode(&products)
+	if err != nil {
+		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 }

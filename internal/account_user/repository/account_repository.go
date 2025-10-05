@@ -8,6 +8,7 @@ import (
 type AccountRepository interface {
 	Create(account *account_user.Account) error
 	Fetch() (accounts []account_user.Account, err error)
+	FetchWithUserGroup() ([]account_user.AccountWithUserGroup, error)
 	GetByID(id int32) (*account_user.Account, error)
 	GetByEmail(email string) (*account_user.Account, error)
 }
@@ -51,6 +52,30 @@ func (ur *accountRepository) Fetch() (accounts []account_user.Account, err error
 	}
 
 	return
+}
+
+func (ur *accountRepository) FetchWithUserGroup() ([]account_user.AccountWithUserGroup, error) {
+	query := `
+		SELECT
+			a.id, 
+			a.name,
+			a.email,
+			a.password_hash,
+			ug.id AS id_user_group,
+			ug.group_name AS group_name
+		FROM account a
+		INNER JOIN user_group ug
+			ON ug.id = a.id_user_group
+	`
+
+	var accountsWithUserGroup []account_user.AccountWithUserGroup
+
+	err := ur.DB.Select(&accountsWithUserGroup, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return accountsWithUserGroup, nil
 }
 
 func (ur *accountRepository) GetByID(id int32) (*account_user.Account, error) {
