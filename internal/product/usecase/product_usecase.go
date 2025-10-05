@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"github.com/Flood-project/backend-flood/internal/product"
 	"github.com/Flood-project/backend-flood/internal/product/repository"
 )
@@ -11,6 +12,8 @@ type ProductUseCase interface {
 	GetByID(id int32) (*product.Produt, error)
 	Update(id int32, product *product.Produt) error
 	Delete(id int32) error
+	FilterBuchaQuadrada(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error)
+
 }
 
 type productUseCase struct {
@@ -65,4 +68,13 @@ func (productUseCase *productUseCase) Delete(id int32) error {
 	}
 
 	return nil
+}
+
+func (productUseCase *productUseCase) FilterBuchaQuadrada(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error) {
+	buchaQuadrada, err := productUseCase.productRepository.FilterBuchaQuadrada(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return buchaQuadrada, nil
 }

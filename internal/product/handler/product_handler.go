@@ -7,6 +7,7 @@ import (
 
 	"github.com/Flood-project/backend-flood/internal/product"
 	"github.com/Flood-project/backend-flood/internal/product/usecase"
+	"github.com/booscaaa/go-paginate/v3/paginate"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -58,6 +59,40 @@ func (handler *ProductHandler) Fetch(response http.ResponseWriter, request *http
 		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
+}
+
+func (handler *ProductHandler) FilterBuchaQuadrada(w http.ResponseWriter, r *http.Request) {
+	params, err := paginate.BindQueryParamsToStruct(r.URL.Query())
+	if err != nil {
+        http.Error(w, "Invalid parameters", http.StatusBadRequest)
+        return
+    }
+
+	sql, args, err := paginate.NewBuilder().
+	Table("products p").
+	Model(&product.ProductWithComponents{}).
+	Select("p.*", "b.tipobucha AS tipo_bucha").
+	LeftJoin("buchas b", "p.id_bucha = b.id").
+	WhereEquals("tipo_bucha", "Quadrado").
+	FromStruct(params).
+	BuildSQL()
+
+	if err != nil {
+        http.Error(w, "Query build error", http.StatusInternalServerError)
+        return
+	}
+
+	rows, err := handler.productUseCase.FilterBuchaQuadrada(r.Context(), sql, args...)
+	if err != nil {
+        http.Error(w, "Não foi possível fitlrar por buchas do tipo quadrado.", http.StatusInternalServerError)
+        return
+    }
+
+	 w.Header().Set("Content-Type", "application/json")
+    if err := json.NewEncoder(w).Encode(rows); err != nil {
+        http.Error(w, "Erro ao converter resposta", http.StatusInternalServerError)
+        return
+    }
 }
 
 func (handler *ProductHandler) GetByID(response http.ResponseWriter, request *http.Request) {
