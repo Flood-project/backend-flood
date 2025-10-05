@@ -14,7 +14,7 @@ type ProductManager interface {
 	GetByID(id int32) (*product.Produt, error)
 	Update(id int32, product *product.Produt) error
 	Delete(id int32) error
-	FilterBuchaQuadrada(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error)
+	WithParams(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error)
 }
 
 type productManager struct {
@@ -145,7 +145,7 @@ func (productManager *productManager) Delete(id int32) error {
 	return nil
 }
 
-func (produtctManager *productManager) FilterBuchaQuadrada(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error) {
+func (produtctManager *productManager) WithParams(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error) {
 	var products []product.ProductWithComponents
 
 	err := produtctManager.DB.SelectContext(ctx, &products, query, args...)

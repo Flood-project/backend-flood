@@ -61,7 +61,23 @@ func (handler *ProductHandler) Fetch(response http.ResponseWriter, request *http
 	}
 }
 
-func (handler *ProductHandler) FilterBuchaQuadrada(w http.ResponseWriter, r *http.Request) {
+func (handler *ProductHandler) WithParams(w http.ResponseWriter, r *http.Request) {
+	buchaType := r.URL.Query().Get("bucha")
+	acionamentoType := r.URL.Query().Get("acionamento")
+	baseType := r.URL.Query().Get("base")
+
+	//paginate.SetDebugMode(true)
+
+	// if buchaType == "" {
+	// 	http.Error(w, "Parâmetros não recebidos", http.StatusInternalServerError)
+    //     return
+	// }
+	
+	// if acionamentoType == "" {
+	// 	http.Error(w, "Tipo do acionamento não recebido", http.StatusInternalServerError)
+    //     return
+	// }
+
 	params, err := paginate.BindQueryParamsToStruct(r.URL.Query())
 	if err != nil {
         http.Error(w, "Invalid parameters", http.StatusBadRequest)
@@ -71,9 +87,11 @@ func (handler *ProductHandler) FilterBuchaQuadrada(w http.ResponseWriter, r *htt
 	sql, args, err := paginate.NewBuilder().
 	Table("products p").
 	Model(&product.ProductWithComponents{}).
-	Select("p.*", "b.tipobucha AS tipo_bucha").
+	Select("p.*", "b.tipobucha AS tipo_bucha", "a.tipoacionamento AS tipo_do_acionamento", "bs.tipobase AS tipo_base").
 	LeftJoin("buchas b", "p.id_bucha = b.id").
-	WhereEquals("tipo_bucha", "Quadrado").
+	LeftJoin("acionamentos a", "p.id_acionamento = a.id").
+	LeftJoin("bases bs", "p.id_base = bs.id").
+	Where("b.tipobucha LIKE ? AND a.tipoacionamento LIKE ? AND bs.tipobase LIKE ?", "%"+buchaType+"%", "%"+acionamentoType+"%", "%"+baseType+"%").
 	FromStruct(params).
 	BuildSQL()
 
@@ -82,17 +100,23 @@ func (handler *ProductHandler) FilterBuchaQuadrada(w http.ResponseWriter, r *htt
         return
 	}
 
-	rows, err := handler.productUseCase.FilterBuchaQuadrada(r.Context(), sql, args...)
+	rows, err := handler.productUseCase.WithParams(r.Context(), sql, args...)
 	if err != nil {
         http.Error(w, "Não foi possível fitlrar por buchas do tipo quadrado.", http.StatusInternalServerError)
         return
     }
 
-	 w.Header().Set("Content-Type", "application/json")
-    if err := json.NewEncoder(w).Encode(rows); err != nil {
-        http.Error(w, "Erro ao converter resposta", http.StatusInternalServerError)
-        return
-    }
+	w.Header().Set("Content-Type", "application/json")
+    err = json.NewEncoder(w).Encode(map[string]interface{}{
+		"products_with_params": rows,
+		"total": len(rows),
+		"page": params.Page,
+		"limit": params.Limit,
+	})
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
 }
 
 func (handler *ProductHandler) GetByID(response http.ResponseWriter, request *http.Request) {

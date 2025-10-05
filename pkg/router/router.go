@@ -64,7 +64,7 @@ func (s *Server) MountProducts(handler *productHandler.ProductHandler) {
 		r.Get("/{id}", handler.GetByID)
 		r.Put("/{id}", handler.Update)
 		r.Delete("/{id}", handler.Delete)
-		r.Get("/bucha/quadrado", handler.FilterBuchaQuadrada)
+		r.Get("/params", handler.WithParams)
 	})
 }
 

@@ -12,7 +12,7 @@ type ProductUseCase interface {
 	GetByID(id int32) (*product.Produt, error)
 	Update(id int32, product *product.Produt) error
 	Delete(id int32) error
-	FilterBuchaQuadrada(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error)
+	WithParams(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error)
 
 }
 
@@ -70,11 +70,11 @@ func (productUseCase *productUseCase) Delete(id int32) error {
 	return nil
 }
 
-func (productUseCase *productUseCase) FilterBuchaQuadrada(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error) {
-	buchaQuadrada, err := productUseCase.productRepository.FilterBuchaQuadrada(ctx, query, args...)
+func (productUseCase *productUseCase) WithParams(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error) {
+	rows, err := productUseCase.productRepository.WithParams(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	return buchaQuadrada, nil
+	return rows, nil
 }
