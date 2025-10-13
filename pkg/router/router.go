@@ -88,5 +88,6 @@ func (s *Server) MountBuchas(handler *buchaHandler.BuchaHandler) {
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
 		r.Delete("/{id}", handler.Delete)
+		r.Get("/params", handler.GetWithParams)
 	})
 }
