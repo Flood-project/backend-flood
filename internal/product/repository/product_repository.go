@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"github.com/Flood-project/backend-flood/internal/product"
 	"github.com/jmoiron/sqlx"
@@ -13,6 +14,7 @@ type ProductManager interface {
 	GetByID(id int32) (*product.Produt, error)
 	Update(id int32, product *product.Produt) error
 	Delete(id int32) error
+	WithParams(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error)
 }
 
 type productManager struct {
@@ -178,4 +180,14 @@ func (productManager *productManager) Delete(id int32) error {
 		return nil
 	}
 	return nil
+}
+
+func (produtctManager *productManager) WithParams(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error) {
+	var products []product.ProductWithComponents
+
+	err := produtctManager.DB.SelectContext(ctx, &products, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	return products, nil
 }

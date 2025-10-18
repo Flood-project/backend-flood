@@ -1,7 +1,11 @@
 package repository
 
 import (
+	"context"
+	"log"
+
 	"github.com/Flood-project/backend-flood/internal/bucha"
+	"github.com/booscaaa/go-paginate/v3/paginate"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -9,6 +13,7 @@ type BuchaManager interface {
 	Create(bucha *bucha.Bucha) error
 	Fetch() ([]bucha.Bucha, error)
 	Delete(id int32) error
+	GetWithParams(ctx context.Context, params *paginate.PaginationParams) ([]bucha.Bucha, int, error)
 }
 
 type buchaManager struct {
@@ -52,4 +57,29 @@ func (buchaManager *buchaManager) Delete(id int32) error {
 		return nil
 	}
 	return nil
+}
+
+func (buchaManager *buchaManager) GetWithParams(ctx context.Context, params *paginate.PaginationParams) ([]bucha.Bucha, int, error) {
+	query, args, err := paginate.NewBuilder().
+	Table("buchas").
+	Model(&bucha.Bucha{}).
+	FromStruct(params).
+	BuildSQL()
+
+	log.Println(query, args)
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var buchasWithParams []bucha.Bucha
+
+	err = buchaManager.DB.SelectContext(ctx, &buchasWithParams, query, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	total := len(buchasWithParams)
+
+	return buchasWithParams, total, nil
 }

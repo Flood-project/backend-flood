@@ -2,11 +2,13 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/Flood-project/backend-flood/internal/bucha"
 	"github.com/Flood-project/backend-flood/internal/bucha/usecase"
+	"github.com/booscaaa/go-paginate/v3/paginate"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -78,4 +80,43 @@ func (handler *BuchaHandler) Delete(response http.ResponseWriter, request *http.
 
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
+}
+
+func (handler *BuchaHandler) GetWithParams(w http.ResponseWriter, r *http.Request) {
+	params, err := paginate.BindQueryParamsToStruct(r.URL.Query())
+	if err != nil {
+		http.Error(w, "Invalid parameters", http.StatusBadRequest)
+		return
+	}
+
+	// sql, args, err := paginate.NewBuilder().
+	// Table("buchas").
+	// Model(&bucha.Bucha{}).
+	// FromStruct(params).
+	// BuildSQL()
+	// if err != nil {
+	// 	http.Error(w, "Query build error", http.StatusInternalServerError)
+	// 	return
+	// }
+
+	// log.Println("query(?) ", sql)
+
+	rows, pageData, err := handler.buchaUseCase.GetWithParams(r.Context(), params)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Não foi possível utlizar os filtros de pesquisa", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(map[string] interface{}{
+		"buchas_with_params": rows,
+		"total": pageData.Total,
+		"page": pageData.Page,
+		"limit": pageData.Limit,
+	})
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
 }

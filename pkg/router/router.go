@@ -67,6 +67,7 @@ func (s *Server) MountProducts(handler *productHandler.ProductHandler) {
 		r.Get("/{id}", handler.GetByID)
 		r.Put("/{id}", handler.Update)
 		r.Delete("/{id}", handler.Delete)
+		r.Get("/params", handler.WithParams)
 	})
 }
 
@@ -90,6 +91,7 @@ func (s *Server) MountBuchas(handler *buchaHandler.BuchaHandler) {
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
 		r.Delete("/{id}", handler.Delete)
+		r.Get("/params", handler.GetWithParams)
 	})
 }
 
