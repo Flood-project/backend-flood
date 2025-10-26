@@ -86,22 +86,7 @@ func (handler *ProductHandler) WithParams(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	sql, args, err := paginate.NewBuilder().
-		Table("products p").
-		Model(&product.ProductWithComponents{}).
-		Select("p.*", "b.tipobucha AS tipo_bucha", "a.tipoacionamento AS tipo_do_acionamento", "bs.tipobase AS tipo_base").
-		LeftJoin("buchas b", "p.id_bucha = b.id").
-		LeftJoin("acionamentos a", "p.id_acionamento = a.id").
-		LeftJoin("bases bs", "p.id_base = bs.id").
-		FromStruct(params).
-		BuildSQL()
-
-	if err != nil {
-		http.Error(w, "Query build error", http.StatusInternalServerError)
-		return
-	}
-
-	rows, err := handler.productUseCase.WithParams(r.Context(), sql, args...)
+	rows, pageData, err := handler.productUseCase.WithParams(r.Context(), params)
 	if err != nil {
 		http.Error(w, "Não foi possível utlizar os filtros de pesquisa", http.StatusInternalServerError)
 		return
@@ -110,9 +95,9 @@ func (handler *ProductHandler) WithParams(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(map[string]interface{}{
 		"products_with_params": rows,
-		"total":                len(rows),
-		"page":                 params.Page,
-		"limit":                params.Limit,
+		"total":                pageData.Total,
+		"page":                 pageData.Page,
+		"limit":                pageData.Limit,
 	})
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)

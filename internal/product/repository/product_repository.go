@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"fmt"
+
 	"github.com/Flood-project/backend-flood/internal/product"
+	"github.com/booscaaa/go-paginate/v3/paginate"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -14,7 +16,7 @@ type ProductManager interface {
 	GetByID(id int32) (*product.Produt, error)
 	Update(id int32, product *product.Produt) error
 	Delete(id int32) error
-	WithParams(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error)
+	WithParams(ctx context.Context, params *paginate.PaginationParams) ([]product.ProductWithComponents, int, error)
 }
 
 type productManager struct {
@@ -57,7 +59,7 @@ func (productManager *productManager) Fetch() ([]product.Produt, error) {
 	query := `SELECT 
 		id, codigo, description, capacidade_estatica, capacidade_trabalho, reducao, altura_bucha, curso, id_bucha, id_acionamento, id_base
 		FROM products`
-	
+
 	var products []product.Produt
 
 	err := productManager.DB.Select(
@@ -94,7 +96,7 @@ func (productManager *productManager) FetchWithComponents() ([]product.ProductWi
 				ON a.id = p.id_acionamento
 			  INNER JOIN bases base
 			  	ON base.id = p.id_base`
-	
+
 	var productsWithComponents []product.ProductWithComponents
 
 	err := productManager.DB.Select(
@@ -116,7 +118,7 @@ func (productManager *productManager) GetByID(id int32) (*product.Produt, error)
 		query,
 		id,
 	).Scan(
-		&product.Id, 
+		&product.Id,
 		&product.Codigo,
 		&product.Description,
 		&product.CapacidadeEstatica,
@@ -182,12 +184,29 @@ func (productManager *productManager) Delete(id int32) error {
 	return nil
 }
 
-func (produtctManager *productManager) WithParams(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error) {
+func (produtctManager *productManager) WithParams(ctx context.Context, params *paginate.PaginationParams) ([]product.ProductWithComponents, int, error) {
+	query, args, err := paginate.NewBuilder().
+		Table("products p").
+		Model(&product.ProductWithComponents{}).
+		Select("p.*", "b.tipobucha AS tipo_bucha", "a.tipoacionamento", "bs.tipobase").
+		LeftJoin("buchas b", "p.id_bucha = b.id").
+		LeftJoin("acionamentos a", "p.id_acionamento = a.id").
+		LeftJoin("bases bs", "p.id_base = bs.id").
+		FromStruct(params).
+		BuildSQL()
+
+	if err != nil {
+		return nil, 0, err
+	}
+
 	var products []product.ProductWithComponents
 
-	err := produtctManager.DB.SelectContext(ctx, &products, query, args...)
+	err = produtctManager.DB.SelectContext(ctx, &products, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return products, nil
+
+	total := len(products)
+
+	return products, total, nil
 }

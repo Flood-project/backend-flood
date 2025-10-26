@@ -2,8 +2,11 @@ package usecase
 
 import (
 	"context"
+
+	"github.com/Flood-project/backend-flood/config"
 	"github.com/Flood-project/backend-flood/internal/product"
 	"github.com/Flood-project/backend-flood/internal/product/repository"
+	"github.com/booscaaa/go-paginate/v3/paginate"
 )
 
 type ProductUseCase interface {
@@ -13,15 +16,14 @@ type ProductUseCase interface {
 	GetByID(id int32) (*product.Produt, error)
 	Update(id int32, product *product.Produt) error
 	Delete(id int32) error
-	WithParams(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error)
-
+	WithParams(ctx context.Context, params *paginate.PaginationParams) ([]product.ProductWithComponents, config.PageData, error)
 }
 
 type productUseCase struct {
 	productRepository repository.ProductManager
 }
 
-func NewProductUseCase(productRepository *repository.ProductManager) ProductUseCase{
+func NewProductUseCase(productRepository *repository.ProductManager) ProductUseCase {
 	return &productUseCase{
 		productRepository: *productRepository,
 	}
@@ -58,7 +60,7 @@ func (productUseCase *productUseCase) GetByID(id int32) (*product.Produt, error)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return product, nil
 }
 
@@ -80,11 +82,15 @@ func (productUseCase *productUseCase) Delete(id int32) error {
 	return nil
 }
 
-func (productUseCase *productUseCase) WithParams(ctx context.Context, query string, args ...interface{}) ([]product.ProductWithComponents, error) {
-	rows, err := productUseCase.productRepository.WithParams(ctx, query, args...)
+func (productUseCase *productUseCase) WithParams(ctx context.Context, params *paginate.PaginationParams) ([]product.ProductWithComponents, config.PageData, error) {
+	rows, total, err := productUseCase.productRepository.WithParams(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, config.PageData{}, err
 	}
 
-	return rows, nil
+	return rows, config.PageData{
+		Total: int64(total),
+		Page:  int64(params.Page),
+		Limit: int64(params.ItemsPerPage),
+	}, nil
 }

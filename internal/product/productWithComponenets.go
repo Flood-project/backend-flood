@@ -12,7 +12,7 @@ type ProductWithComponents struct {
 	IdBucha            int32  `json:"id_bucha" db:"id_bucha" paginate:"p.id_bucha"`
 	TipoBucha          string `json:"tipo_bucha" db:"tipo_bucha" paginate:"b.tipoBucha"`
 	IdAcionamento      int32  `json:"id_acionamento" db:"id_acionamento" paginate:"p.id_acionamento"`
-	TipoAcionamento    string `json:"tipo_do_acionamento" db:"tipo_do_acionamento"`
+	TipoAcionamento    string `json:"tipoacionamento" db:"tipoacionamento" paginate:"a.tipoacionamento"`
 	IdBase             int32  `json:"id_base" db:"id_base" paginate:"p.base"`
-	TipoBase           string `json:"tipo_base" db:"tipo_base"`
+	TipoBase           string `json:"tipobase" db:"tipobase" paginate:"bs.tipobase"`
 }
