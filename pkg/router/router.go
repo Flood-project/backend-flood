@@ -2,15 +2,15 @@ package router
 
 import (
 	accountHandler "github.com/Flood-project/backend-flood/internal/account_user/handler"
-	buchaHandler "github.com/Flood-project/backend-flood/internal/bucha/handler"
 	acionamentoHandler "github.com/Flood-project/backend-flood/internal/acionameto/handler"
 	baseHandler "github.com/Flood-project/backend-flood/internal/base/handler"
+	buchaHandler "github.com/Flood-project/backend-flood/internal/bucha/handler"
 	loginHandler "github.com/Flood-project/backend-flood/internal/login/handler"
 	"github.com/Flood-project/backend-flood/internal/middleware"
+	ObjectStoreHandler "github.com/Flood-project/backend-flood/internal/object_store/handler"
 	productHandler "github.com/Flood-project/backend-flood/internal/product/handler"
 	"github.com/Flood-project/backend-flood/internal/token"
 	tokenHandler "github.com/Flood-project/backend-flood/internal/token/handler"
-	ObjectStoreHandler "github.com/Flood-project/backend-flood/internal/object_store/handler"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 )
@@ -100,5 +100,6 @@ func (s *Server) MountObjectStore(handler *ObjectStoreHandler.ObjectStoreHandler
 		r.Use(middleware.CheckAuthentication(s.TokenManager))
 		r.Get("/", handler.Fetch)
 		r.Post("/", handler.Create)
+		r.Get("/url/{storageKey}", handler.GetFileUrl)
 	})
 }

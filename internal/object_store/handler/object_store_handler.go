@@ -6,11 +6,13 @@ import (
 	"io"
 	"log"
 	"net/http"
+
 	//"strconv"
 	"time"
 
 	"github.com/Flood-project/backend-flood/internal/object_store"
 	"github.com/Flood-project/backend-flood/internal/object_store/usecase"
+	"github.com/go-chi/chi/v5"
 	//"github.com/go-chi/chi/v5"
 )
 
@@ -25,7 +27,15 @@ func NewObjectStoreHandler(usecase usecase.ObjectStoreUseCase) *ObjectStoreHandl
 }
 
 func (handler *ObjectStoreHandler) Create(response http.ResponseWriter, request *http.Request) {
-	 //var fileEncoded object_store.FileData
+	// productIdStr := chi.URLParam(request, "id")
+	// log.Println("id: ", productIdStr)
+	// productId, err := strconv.Atoi(productIdStr)
+	// if err != nil {
+	// 	http.Error(response, "ID de produto não encontrado. ", http.StatusBadRequest)
+	// 	return
+	// } //no need productId
+
+	//var fileEncoded object_store.FileData
 	// err := json.NewDecoder(request.Body).Decode(&fileEncoded)
 	// if err != nil {
 	// 	log.Println("erro do decode: ", err)
@@ -34,14 +44,14 @@ func (handler *ObjectStoreHandler) Create(response http.ResponseWriter, request 
 	// }
 
 	err := request.ParseMultipartForm(32 << 20) // 32MB max
-    if err != nil {
-        log.Println("Erro ao parse multipart form: ", err)
-        http.Error(response, "Erro no formato do formulário", http.StatusBadRequest)
-        return
-    }
+	if err != nil {
+		log.Println("Erro ao parse multipart form: ", err)
+		http.Error(response, "Erro no formato do formulário", http.StatusBadRequest)
+		return
+	}
 
-	userID := request.Context().Value("user_id").(int32)
-	log.Println("id recebido: ", userID)
+	//productID := request.Context().Value("product_id").(int32)
+	//log.Println("id recebido: ", productID)
 
 	// idWithCHi := chi.URLParam(request, "id")
 	// chiID, err := strconv.Atoi(idWithCHi)
@@ -68,21 +78,21 @@ func (handler *ObjectStoreHandler) Create(response http.ResponseWriter, request 
 		return
 	}
 	defer file.Close()
-	
+
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
 		http.Error(response, "Erro ao processar arquivo", http.StatusInternalServerError)
 		return
 	}
 
-	url := fmt.Sprintf("http://localhost:8080/%s", header.Filename) 
+	url := fmt.Sprintf("http://localhost:8080/%s", header.Filename)
 	fileData := object_store.FileData{
-		UserID: userID,
-		FileName: header.Filename,
-		StorageKey: generateStorageKey(header.Filename),
+		//ProductID:   int32(productId),
+		FileName:    header.Filename,
+		StorageKey:  generateStorageKey(header.Filename),
 		ContentType: header.Header.Get("Content-Type"),
-		Size: header.Size,
-		URL: url,
+		Size:        header.Size,
+		URL:         url,
 	}
 
 	err = handler.usecase.AddFile(&fileData, fileBytes)
@@ -104,7 +114,7 @@ func (handler *ObjectStoreHandler) Create(response http.ResponseWriter, request 
 }
 
 func generateStorageKey(filename string) string {
-    return fmt.Sprintf("%d_%s", time.Now().UnixNano(), filename)
+	return fmt.Sprintf("%d_%s", time.Now().UnixNano(), filename)
 }
 
 func (handler *ObjectStoreHandler) Fetch(response http.ResponseWriter, request *http.Request) {
@@ -122,4 +132,17 @@ func (handler *ObjectStoreHandler) Fetch(response http.ResponseWriter, request *
 		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
+}
+
+func (handler *ObjectStoreHandler) GetFileUrl(response http.ResponseWriter, request *http.Request) {
+	storageKey := chi.URLParam(request, "storageKey")
+
+	url, err := handler.usecase.GetFileUrl(storageKey)
+	if err != nil {
+		http.Error(response, "Erro ao gerar URL", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]string{"url": url})
 }

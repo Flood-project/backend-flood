@@ -3,7 +3,7 @@ package usecase
 import (
 	"bytes"
 	"context"
-	
+
 	"log"
 
 	"github.com/Flood-project/backend-flood/internal/object_store"
@@ -14,16 +14,17 @@ import (
 type ObjectStoreUseCase interface {
 	AddFile(file *object_store.FileData, fileByte []byte) error
 	FetchFiles() ([]object_store.FileData, error)
+	GetFileUrl(storageKey string) (string, error)
 }
 
 type objectStoreUseCase struct {
-	objectStoreRepository repository.ObjectStoreManager
+	objectStoreRepository   repository.ObjectStoreManager
 	minIOConnectionResponse object_store.MinIOConnectionResponse
 }
 
-func NewObjectStoreUseCase(objectStoreRepository repository.ObjectStoreManager, minIOConnectionResponse object_store.MinIOConnectionResponse) ObjectStoreUseCase{
+func NewObjectStoreUseCase(objectStoreRepository repository.ObjectStoreManager, minIOConnectionResponse object_store.MinIOConnectionResponse) ObjectStoreUseCase {
 	return &objectStoreUseCase{
-		objectStoreRepository: objectStoreRepository,
+		objectStoreRepository:   objectStoreRepository,
 		minIOConnectionResponse: minIOConnectionResponse,
 	}
 }
@@ -85,4 +86,13 @@ func (usecase *objectStoreUseCase) FetchFiles() ([]object_store.FileData, error)
 	}
 
 	return files, err
+}
+
+func (uc *objectStoreUseCase) GetFileUrl(storageKey string) (string, error) {
+	url, err := uc.objectStoreRepository.GetFileUrl(storageKey)
+	if err != nil {
+		log.Println("erro arquivos: ", err)
+		return "", err
+	}
+	return url, nil
 }

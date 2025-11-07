@@ -1,20 +1,26 @@
 package repository
 
 import (
+	"context"
+	"time"
+
 	"github.com/Flood-project/backend-flood/internal/object_store"
 	"github.com/jmoiron/sqlx"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 type ObjectStoreManager interface {
 	AddFile(file *object_store.FileData, fileByte []byte) error
 	FetchFiles() ([]object_store.FileData, error)
+	GetFileUrl(storageKey string) (string, error)
 }
 
 type objectStoreManager struct {
 	DB *sqlx.DB
 }
 
-func NewObjectStoreUseCase(db *sqlx.DB) ObjectStoreManager{
+func NewObjectStoreUseCase(db *sqlx.DB) ObjectStoreManager {
 	return &objectStoreManager{
 		DB: db,
 	}
@@ -22,12 +28,11 @@ func NewObjectStoreUseCase(db *sqlx.DB) ObjectStoreManager{
 
 func (repository *objectStoreManager) AddFile(file *object_store.FileData, fileByte []byte) error {
 	query := `INSERT INTO files (
-		user_id, file_name, storage_key, url, size, content_type)
-		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+		file_name, storage_key, url, size, content_type)
+		VALUES ($1, $2, $3, $4, $5) RETURNING id`
 
 	err := repository.DB.QueryRow(
 		query,
-		file.UserID,
 		file.FileName,
 		file.StorageKey,
 		file.URL,
@@ -35,7 +40,7 @@ func (repository *objectStoreManager) AddFile(file *object_store.FileData, fileB
 		file.ContentType,
 	).Scan(&file.ID)
 	if err != nil {
-		return err 
+		return err
 	}
 
 	return nil
@@ -45,17 +50,16 @@ func (repository *objectStoreManager) FetchFiles() ([]object_store.FileData, err
 	query := `
 		SELECT 
 		  f.id,
-		  f.user_id,
-		  u.name,
-		  u.email,
+		  f.product_id,
+		  p.codigo,
 		  f.file_name,
 		  f.storage_key,
 		  f.url,
 		  f.size,
 		  f.content_type
 		FROM files f
-		INNER JOIN account u
-		  ON u.id = f.user_id
+		INNER JOIN products p
+		  ON p.id = f.product_id
 	`
 	var files []object_store.FileData
 
@@ -68,4 +72,22 @@ func (repository *objectStoreManager) FetchFiles() ([]object_store.FileData, err
 	}
 
 	return files, nil
+}
+
+func (r *objectStoreManager) GetFileUrl(storageKey string) (string, error) {
+	minioClient, err := minio.New("localhost:9000", &minio.Options{
+		Creds:  credentials.NewStaticV4("minioadmin", "minioadmin", ""),
+		Secure: false,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	// Gera URL assinada que expira em 1 hora
+	url, err := minioClient.PresignedGetObject(context.Background(), "files", storageKey, time.Hour, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return url.String(), nil
 }
