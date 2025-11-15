@@ -2,7 +2,7 @@ package object_store
 
 type FileData struct {
 	ID int32 `json:"id" db:"id"`
-	//ProductID int32  `json:"product_id" db:"product_id"`
+	ProductID int32  `json:"product_id" db:"product_id"`
 	Codigo string `json:"codigo" db:"codigo"`
 	//Email       string `json:"email" db:"email"`
 	FileName    string `json:"file_name" db:"file_name"`

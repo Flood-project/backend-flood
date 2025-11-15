@@ -17,5 +17,5 @@ type ProductWithComponents struct {
 	TipoAcionamento    string                  `json:"tipoacionamento" db:"tipoacionamento" paginate:"a.tipoacionamento"`
 	IdBase             int32                   `json:"id_base" db:"id_base" paginate:"p.base"`
 	TipoBase           string                  `json:"tipobase" db:"tipobase" paginate:"bs.tipobase"`
-	Images             []object_store.FileData `json:"images,omitempty"`
+	Images             []object_store.FileData `json:"images"`
 }

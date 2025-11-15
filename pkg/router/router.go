@@ -97,9 +97,12 @@ func (s *Server) MountBuchas(handler *buchaHandler.BuchaHandler) {
 
 func (s *Server) MountObjectStore(handler *ObjectStoreHandler.ObjectStoreHandler) {
 	s.Router.Route("/files", func(r chi.Router) {
-		r.Use(middleware.CheckAuthentication(s.TokenManager))
-		r.Get("/", handler.Fetch)
-		r.Post("/", handler.Create)
-		r.Get("/url/{storageKey}", handler.GetFileUrl)
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.CheckAuthentication(s.TokenManager))
+			r.Get("/", handler.Fetch)
+			r.Post("/{product_id}", handler.Create)
+			r.Get("/url/{storageKey}", handler.GetFileUrl)
+		})
+		r.Get("/images/{storageKey}", handler.ServeImage)
 	})
 }

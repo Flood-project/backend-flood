@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/Flood-project/backend-flood/internal/object_store"
+	"github.com/Flood-project/backend-flood/internal/object_store/repository"
 	"github.com/Flood-project/backend-flood/internal/product"
 	"github.com/booscaaa/go-paginate/v3/paginate"
 	"github.com/jmoiron/sqlx"
@@ -24,11 +25,13 @@ type ProductManager interface {
 
 type productManager struct {
 	DB *sqlx.DB
+	ObjectStoreManager repository.ObjectStoreManager
 }
 
-func NewProductManager(db *sqlx.DB) ProductManager {
+func NewProductManager(db *sqlx.DB, objectStore repository.ObjectStoreManager) ProductManager {
 	return &productManager{
 		DB: db,
+		ObjectStoreManager: objectStore,
 	}
 }
 
@@ -76,25 +79,34 @@ func (productManager *productManager) Fetch() ([]product.Produt, error) {
 	return products, nil
 }
 
-func (productManager *productManager) GetProductByIdWithImage(productId int32) ([]object_store.FileData, error) {
-	var images []object_store.FileData
-
-	query := `SELECT id, file_name, storage_key, url, size, content_type 
-              FROM files WHERE product_id = $1`
-
-	err := productManager.DB.Select(&images, query, productId)
-	if err != nil {
-		return nil, err
-	}
-
-	return images, nil
+func (productManager *productManager) GetProductByIdWithImage(productID int32) ([]object_store.FileData, error) {
+    query := `
+        SELECT 
+            f.id,
+            f.product_id,
+            f.file_name,
+            f.storage_key,
+            f.size,
+            f.content_type,
+            'http://localhost:8080/files/images/' || f.storage_key as url
+        FROM files f
+        WHERE f.product_id = $1
+    `
+    
+    var files []object_store.FileData
+    err := productManager.DB.Select(&files, query, productID)
+    if err != nil {
+        return nil, err
+    }
+    
+    return files, nil
 }
 
 func (productManager *productManager) FetchWithComponents() ([]product.ProductWithComponents, error) {
 	query := `SELECT 
 				p.id,
 				p.codigo,
-				p.description,
+				p.description,c
 				p.capacidade_estatica,
 				p.capacidade_trabalho,
 				p.reducao,

@@ -10,7 +10,7 @@ COPY . .
 
 WORKDIR /app/cmd
 
-RUN CGO_ENABLE=0 go build -ldflags="-s -w" -o /app/server ./cmd/main.go
+RUN CGO_ENABLE=0 go build -ldflags="-s -w" -o /app/server ./main.go
 
 FROM scratch
 

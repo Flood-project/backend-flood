@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	//"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -31,15 +31,15 @@ import (
 	objectStoreUseCase "github.com/Flood-project/backend-flood/internal/object_store/usecase"
 	objectStoreHandler "github.com/Flood-project/backend-flood/internal/object_store/handler"
 	"github.com/Flood-project/backend-flood/pkg/router"
-	"github.com/joho/godotenv"
+	//"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Println(err)
-	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
 
 	db := config.ConnectDB()
 
@@ -60,9 +60,7 @@ func main() {
 	loginUseCase := loginUseCase.NewLogin(accountRepository, tokenManager, tokenRepository)
 	loginHandler := loginHandler.NewLoginHandler(loginUseCase)
 
-	productRepository := productRepository.NewProductManager(db)
-	productUseCase := productUseCase.NewProductUseCase(&productRepository)
-	productHandler := productHandler.NewProductHandler(productUseCase)
+
 
 	tokenHandler := tokenHandler.NewTokenHandler(tokenManager, accountUsecase)
 	
@@ -78,9 +76,13 @@ func main() {
 	baseUseCase := baseUseCase.NewBaseUseCase(baseRepository)
 	baseHandler := handler.NewBaseHandler(baseUseCase)
 
-	objectStoreRepository := objectStoreRepository.NewObjectStoreUseCase(db)
+	objectStoreRepository := objectStoreRepository.NewObjectStoreUseCase(db, minIOConn)
 	objectStoreUseCase := objectStoreUseCase.NewObjectStoreUseCase(objectStoreRepository, *minIOConn)
 	objectStoreHandler := objectStoreHandler.NewObjectStoreHandler(objectStoreUseCase)
+
+	productRepository := productRepository.NewProductManager(db, objectStoreRepository)
+	productUseCase := productUseCase.NewProductUseCase(&productRepository)
+	productHandler := productHandler.NewProductHandler(productUseCase)
 
 	server := router.CreateNewServer(tokenManager)
 	server.MountAccounts(accountHandler)

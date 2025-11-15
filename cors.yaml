@@ -1,0 +1,6 @@
+listener:
+  default:
+    ports:
+      - 9000
+    cors:
+      enabled: true

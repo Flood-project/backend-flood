@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 
 	//"strconv"
 	"time"
@@ -43,12 +44,12 @@ func (handler *ObjectStoreHandler) Create(response http.ResponseWriter, request 
 	// 	return
 	// }
 
-	err := request.ParseMultipartForm(32 << 20) // 32MB max
-	if err != nil {
-		log.Println("Erro ao parse multipart form: ", err)
-		http.Error(response, "Erro no formato do formulário", http.StatusBadRequest)
-		return
-	}
+	// err := request.ParseMultipartForm(32 << 20) // 32MB max
+	// if err != nil {
+	// 	log.Println("Erro ao parse multipart form: ", err)
+	// 	http.Error(response, "Erro no formato do formulário", http.StatusBadRequest)
+	// 	return
+	// }
 
 	//productID := request.Context().Value("product_id").(int32)
 	//log.Println("id recebido: ", productID)
@@ -62,14 +63,12 @@ func (handler *ObjectStoreHandler) Create(response http.ResponseWriter, request 
 	// 	return
 	// }
 
-	// userIDStr := request.FormValue("user_id")
-	// userID, err := strconv.Atoi(userIDStr)
-	// if err != nil {
-	// 	log.Println("erro no id: ", err, "user id: ", userID, "antes do strconv", userIDStr)
-	// 	log.Println("passing foor int32", int32(userID))
-	// 	http.Error(response, "Erro no id no usuário", http.StatusBadRequest)
-	// 	return
-	// }
+	productIDStr := chi.URLParam(request, "product_id")
+	productID, err := strconv.Atoi(productIDStr)
+	if err != nil {
+		http.Error(response, "Erro ao receber ID do produto", http.StatusBadRequest)
+		return
+	}
 
 	file, header, err := request.FormFile("file")
 	if err != nil {
@@ -87,7 +86,7 @@ func (handler *ObjectStoreHandler) Create(response http.ResponseWriter, request 
 
 	url := fmt.Sprintf("http://localhost:8080/%s", header.Filename)
 	fileData := object_store.FileData{
-		//ProductID:   int32(productId),
+		ProductID:   int32(productID),
 		FileName:    header.Filename,
 		StorageKey:  generateStorageKey(header.Filename),
 		ContentType: header.Header.Get("Content-Type"),
@@ -95,7 +94,7 @@ func (handler *ObjectStoreHandler) Create(response http.ResponseWriter, request 
 		URL:         url,
 	}
 
-	err = handler.usecase.AddFile(&fileData, fileBytes)
+	err = handler.usecase.AddFile(&fileData, fileBytes, int32(productID))
 	if err != nil {
 		log.Println(err)
 		http.Error(response, "Erro ao salvar arquivo no banco de dados", http.StatusInternalServerError)
@@ -145,4 +144,25 @@ func (handler *ObjectStoreHandler) GetFileUrl(response http.ResponseWriter, requ
 
 	response.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(map[string]string{"url": url})
+}
+
+func (handler *ObjectStoreHandler) ServeImage(response http.ResponseWriter, request *http.Request) {
+	storageKey := chi.URLParam(request, "storageKey")
+	if storageKey == "" {
+		http.Error(response, "storageKey é obrigatório", http.StatusBadRequest)
+		return
+	}
+
+	fileBytes, contentType, err := handler.usecase.GetObject(storageKey)
+	if err != nil {
+		log.Printf("Erro ao buscar imagem %s: %v", storageKey, err)
+		http.Error(response, "Imagem não encontrada", http.StatusNotFound)
+		return
+	}
+
+	response.Header().Set("Content-Type", contentType)
+	response.Header().Set("Content-Length", fmt.Sprintf("%d", len(fileBytes)))
+	response.Header().Set("Cache-Control", "public, max-age=3600")
+
+	response.Write(fileBytes)
 }
