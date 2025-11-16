@@ -12,4 +12,5 @@ type Produt struct {
 	Id_bucha           int32  `json:"id_bucha" db:"id_bucha" paginate:"products.id_bucha"`
 	Id_acionamento     int32  `json:"id_acionamento" db:"id_acionamento" paginate:"products.id_acionamento"`
 	Id_base            int32  `json:"id_base" db:"id_base" paginate:"products.base"`
+ 	Ativo 		       bool   `json:"ativo" db:"ativo" paginate:"products.ativo"`
 }

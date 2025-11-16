@@ -49,7 +49,7 @@ func (ur *accountRepository) Create(account *account_user.Account) error {
 }
 
 func (ur *accountRepository) Fetch() (accounts []account_user.Account, err error) {
-	query := `SELECT id, name, email, password_hash, id_user_group FROM account`
+	query := `SELECT id, name, email, password_hash, id_user_group, active FROM account`
 
 	err = ur.DB.Select(&accounts, query)
 	if err != nil {
@@ -66,6 +66,7 @@ func (ur *accountRepository) FetchWithUserGroup() ([]account_user.AccountWithUse
 			a.name,
 			a.email,
 			a.password_hash,
+			a.active,
 			ug.id AS id_user_group,
 			ug.group_name AS group_name
 		FROM account a
@@ -86,7 +87,7 @@ func (ur *accountRepository) FetchWithUserGroup() ([]account_user.AccountWithUse
 func (ur *accountRepository) GetByID(id int32) (*account_user.Account, error) {
 	var account account_user.Account
 
-	query := `SELECT id, name, email, password_hash, id_user_group FROM account WHERE id = $1`
+	query := `SELECT id, name, email, password_hash, id_user_group, active FROM account WHERE id = $1`
 
 	err := ur.DB.QueryRow(
 		query,
@@ -97,6 +98,7 @@ func (ur *accountRepository) GetByID(id int32) (*account_user.Account, error) {
 		&account.Email,
 		&account.Password_hash,
 		&account.IdUserGroup,
+		&account.Active,
 	)
 	if err != nil {
 		return nil, err
@@ -108,12 +110,12 @@ func (ur *accountRepository) GetByID(id int32) (*account_user.Account, error) {
 func (accountRepository *accountRepository) GetByEmail(email string) (*account_user.Account, error) {
 	var account account_user.Account
 
-	query := `SELECT id, email, password_hash, id_user_group FROM account WHERE email = $1`
+	query := `SELECT id, email, password_hash, id_user_group, active FROM account WHERE email = $1`
 
 	err := accountRepository.DB.QueryRow(
 		query,
 		email,
-	).Scan(&account.Id_account, &account.Email, &account.Password_hash, &account.IdUserGroup)
+	).Scan(&account.Id_account, &account.Email, &account.Password_hash, &account.IdUserGroup, &account.Active)
 	if err != nil {
 		return nil, err
 	}
@@ -134,12 +136,13 @@ func (repository *accountRepository) GetUserGroup() ([]account_user.AccountGroup
 }
 
 func (repository *accountRepository) UpdateUser(id int32, account *account_user.Account) error {
-	query := `UPDATE account SET name=$1, id_user_group=$2 WHERE id=$3`
+	query := `UPDATE account SET name=$1, id_user_group=$2, active=$3 WHERE id=$4`
 
 	res, err := repository.DB.Exec(
 		query,
 		account.Name,
 		account.IdUserGroup,
+		account.Active,
 		id,
 	)
 	if err != nil {
