@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/Flood-project/backend-flood/internal/product"
 	"github.com/booscaaa/go-paginate/v3/paginate"
@@ -46,9 +47,11 @@ func (productManager *productManager) Create(product *product.Produt) error {
 		product.Curso,
 		product.Id_bucha,
 		product.Id_acionamento,
+		product.Id_base,
 		product.Ativo,
 	).Scan(&product.Id)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 

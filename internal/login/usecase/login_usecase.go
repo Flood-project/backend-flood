@@ -33,6 +33,10 @@ func (loginUseCase *loginUseCase) Login(email, password string) (string, string,
 		return "", "", errors.New("nenhum email encontrado")
 	}
 
+	if !account.Active {
+		return "", "", errors.New("está conta está inativa")
+	}
+
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password_hash), []byte(password))
 	if err != nil {
 		return "", "", errors.New("senha inválida")

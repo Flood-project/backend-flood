@@ -86,16 +86,12 @@ func (handler *ProductHandler) WithParams(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	log.Println("params: ", params)
-
 	rows, pageData, err := handler.productUseCase.WithParams(r.Context(), params)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Não foi possível utlizar os filtros de pesquisa", http.StatusInternalServerError)
 		return
 	}
-
-	log.Println("rows: ", rows)
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(map[string]interface{}{
