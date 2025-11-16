@@ -16,20 +16,18 @@ import (
 
 type AccountHandler struct {
 	accountUsecase usecase.AccountUseCase
-	token token.TokenManager
+	token          token.TokenManager
 }
 
 func NewAccountHandler(accountUsecase usecase.AccountUseCase, token token.TokenManager) *AccountHandler {
 	return &AccountHandler{
 		accountUsecase: accountUsecase,
-		token: token,
+		token:          token,
 	}
 }
 
 func (handler *AccountHandler) Create(response http.ResponseWriter, request *http.Request) {
 	var account account_user.Account
-
-
 
 	err := json.NewDecoder(request.Body).Decode(&account)
 	if err != nil {
@@ -44,10 +42,10 @@ func (handler *AccountHandler) Create(response http.ResponseWriter, request *htt
 	}
 
 	hashedAccount := account_user.Account{
-		Name: account.Name,
-		Email: account.Email,
+		Name:          account.Name,
+		Email:         account.Email,
 		Password_hash: string(hashedPass),
-		IdUserGroup: account.IdUserGroup,
+		IdUserGroup:   account.IdUserGroup,
 	}
 
 	err = handler.accountUsecase.Create(&hashedAccount)
@@ -69,16 +67,14 @@ func (handler *AccountHandler) Create(response http.ResponseWriter, request *htt
 func (handler *AccountHandler) Fetch(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 
-	tokenHeader:= request.Header.Get("Authorization")
+	tokenHeader := request.Header.Get("Authorization")
 	if tokenHeader == "" {
-		log.Println("entra aqui? ")
 		http.Error(response, "Usuário não autorizado.", http.StatusUnauthorized)
 		return
 	}
 
 	parts := strings.Split(tokenHeader, " ")
 	if len(parts) != 2 || parts[0] != "Bearer" {
-		log.Println("entra aqui? 2", parts)
 		http.Error(response, "Formato do token inválido.", http.StatusUnauthorized)
 		return
 	}
@@ -87,7 +83,7 @@ func (handler *AccountHandler) Fetch(response http.ResponseWriter, request *http
 	_, err := handler.token.ValidateToken(tokenString)
 	if err != nil {
 		http.Error(response, "Token inválido.", http.StatusUnauthorized)
-		return 
+		return
 	}
 
 	accounts, err := handler.accountUsecase.Fetch()
@@ -137,4 +133,70 @@ func (handler *AccountHandler) GetByID(response http.ResponseWriter, request *ht
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(account)
+}
+
+func (handler *AccountHandler) GetUserGroup(response http.ResponseWriter, request *http.Request) {
+	userGroupName, err := handler.accountUsecase.GetUserGroup()
+	if err != nil {
+		log.Println(err)
+		http.Error(response, "Erro ao listar nome do grupo de usuário. ", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(response).Encode(&userGroupName)
+	if err != nil {
+		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+}
+
+func (handler *AccountHandler) UpdateAccount(response http.ResponseWriter, request *http.Request) {
+	idStr := chi.URLParam(request, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(response, "Conta não encontrada. ", http.StatusBadRequest)
+		return
+	}
+
+	var account account_user.Account
+	err = json.NewDecoder(request.Body).Decode(&account)
+	if err != nil {
+		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	err = handler.accountUsecase.UpdateUser(int32(id), &account)
+	if err != nil {
+		http.Error(response, "Erro ao atualizar um usuário. ", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+
+	err = json.NewEncoder(response).Encode(&account)
+	if err != nil {
+		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+}
+
+func (handler *AccountHandler) DeleteAccount(response http.ResponseWriter, request *http.Request) {
+	idStr := chi.URLParam(request, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(response, "Conta não encontrada. ", http.StatusBadRequest)
+		return
+	}
+
+	err = handler.accountUsecase.DeleteUser(int32(id))
+	if err != nil {
+		http.Error(response, "Erro ao deletar um usuário. ", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
 }

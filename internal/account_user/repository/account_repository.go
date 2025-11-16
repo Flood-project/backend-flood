@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/Flood-project/backend-flood/internal/account_user"
 	"github.com/jmoiron/sqlx"
 )
@@ -11,6 +13,9 @@ type AccountRepository interface {
 	FetchWithUserGroup() ([]account_user.AccountWithUserGroup, error)
 	GetByID(id int32) (*account_user.Account, error)
 	GetByEmail(email string) (*account_user.Account, error)
+	GetUserGroup() ([]account_user.AccountGroupName, error)
+	UpdateUser(id int32, account *account_user.Account) error
+	DeleteUser(id int32) error
 }
 
 type accountRepository struct {
@@ -114,4 +119,54 @@ func (accountRepository *accountRepository) GetByEmail(email string) (*account_u
 	}
 
 	return &account, nil
+}
+
+func (repository *accountRepository) GetUserGroup() ([]account_user.AccountGroupName, error) {
+	var accountGorupNames []account_user.AccountGroupName
+	query := `SELECT id, group_name FROM user_group`
+
+	err := repository.DB.Select(&accountGorupNames, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return accountGorupNames, nil
+}
+
+func (repository *accountRepository) UpdateUser(id int32, account *account_user.Account) error {
+	query := `UPDATE account SET name=$1, id_user_group=$2 WHERE id=$3`
+
+	res, err := repository.DB.Exec(
+		query,
+		account.Name,
+		account.IdUserGroup,
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("Error: Nenhuma conta foi modificada.")
+	}
+
+	return nil
+}
+
+func (repository *accountRepository) DeleteUser(id int32) error {
+	query := `DELETE FROM account WHERE id=$1`
+
+	err := repository.DB.QueryRow(
+		query,
+		id,
+	)
+	if err != nil {
+		return nil
+	}
+	return nil
 }

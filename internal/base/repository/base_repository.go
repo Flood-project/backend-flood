@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/Flood-project/backend-flood/internal/base"
 	"github.com/jmoiron/sqlx"
 )
@@ -9,6 +11,7 @@ type BaseManagement interface {
 	Create(base *base.Base) error
 	Fetch() ([]base.Base, error)
 	Delete(id int32) error
+	Update(id int32, base *base.Base) error
 }
 
 type baseManagement struct {
@@ -56,3 +59,26 @@ func (management *baseManagement) Delete(id int32) error {
 	return nil
 }
 
+func (management *baseManagement) Update(id int32, base *base.Base) error {
+	query := `UPDATE bases SET tipobase=$1 WHERE id=$2`
+
+	res, err := management.DB.Exec(
+		query,
+		base.TipoBase,
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("Error: Nenhuma base foi modificada.")
+	}
+
+	return nil
+}

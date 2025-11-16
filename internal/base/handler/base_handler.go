@@ -79,3 +79,35 @@ func (handler *BaseHandler) Delete(response http.ResponseWriter, request *http.R
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 }
+
+func (handler *BaseHandler) UpdateBase(response http.ResponseWriter, request *http.Request) {
+	idStr := chi.URLParam(request, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(response, "Base não encontrada. ", http.StatusBadRequest)
+		return
+	}
+
+	var base base.Base
+
+	err = json.NewDecoder(request.Body).Decode(&base)
+	if err != nil {
+		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	err = handler.baseUseCase.Update(int32(id), &base)
+	if err != nil {
+		http.Error(response, "Erro ao editar tipo de base.", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+
+	err = json.NewEncoder(response).Encode(&base)
+	if err != nil {
+		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+}
