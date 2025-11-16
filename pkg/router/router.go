@@ -45,6 +45,9 @@ func (s *Server) MountAccounts(handler *accountHandler.AccountHandler) {
 		r.Get("/", handler.Fetch)
 		r.Get("/groupid", handler.FetchWithUserGroup)
 		r.Get("/{id}", handler.GetByID)
+		r.Get("/group-name", handler.GetUserGroup)
+		r.Put("/{id}", handler.UpdateAccount)
+		r.Delete("/{id}", handler.DeleteAccount)
 		// r.Group(func(r chi.Router) {
 		// 	r.Use(middleware.CheckAuthentication(s.TokenManager))
 		// 	r.Post("/exampleRoutesWithMiddleware", handler.Create)
@@ -76,6 +79,7 @@ func (s *Server) MountBase(handler *baseHandler.BaseHandler) {
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
 		r.Delete("/{id}", handler.Delete)
+		r.Put("/{id}", handler.UpdateBase)
 	})
 }
 func (s *Server) MountAcionamentos(handler *acionamentoHandler.AcionamentoHandler) {
@@ -83,6 +87,7 @@ func (s *Server) MountAcionamentos(handler *acionamentoHandler.AcionamentoHandle
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
 		r.Delete("/{id}", handler.Delete)
+		r.Put("/{id}", handler.UpdateAcionamento)
 	})
 }
 
@@ -92,6 +97,7 @@ func (s *Server) MountBuchas(handler *buchaHandler.BuchaHandler) {
 		r.Get("/", handler.Fetch)
 		r.Delete("/{id}", handler.Delete)
 		r.Get("/params", handler.GetWithParams)
+		r.Put("/{id}", handler.UpdateBucha)
 	})
 }
 

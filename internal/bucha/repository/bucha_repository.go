@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/Flood-project/backend-flood/internal/bucha"
@@ -14,6 +15,7 @@ type BuchaManager interface {
 	Fetch() ([]bucha.Bucha, error)
 	Delete(id int32) error
 	GetWithParams(ctx context.Context, params *paginate.PaginationParams) ([]bucha.Bucha, int, error)
+	Update(id int32, bucha *bucha.Bucha) error
 }
 
 type buchaManager struct {
@@ -82,4 +84,28 @@ func (buchaManager *buchaManager) GetWithParams(ctx context.Context, params *pag
 	total := len(buchasWithParams)
 
 	return buchasWithParams, total, nil
+}
+
+func (manager *buchaManager) Update(id int32, bucha *bucha.Bucha) error {
+	query := `UPDATE buchas SET tipobucha=$1 WHERE id=$2`
+
+	res, err := manager.DB.Exec(
+		query,
+		bucha.TipoBucha,
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("Error: Nenhum tipo de bucha foi modificado.")
+	}
+
+	return nil
 }

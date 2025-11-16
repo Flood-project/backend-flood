@@ -79,3 +79,35 @@ func (handler *AcionamentoHandler) Delete(response http.ResponseWriter, request 
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 }
+
+func (handler *AcionamentoHandler) UpdateAcionamento(response http.ResponseWriter, request *http.Request) {
+	idStr := chi.URLParam(request, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(response, "Acionamento não encontrado. ", http.StatusBadRequest)
+		return
+	}
+
+	var acionamento acionametos.Acionamento
+
+	err = json.NewDecoder(request.Body).Decode(&acionamento)
+	if err != nil {
+		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	err = handler.acionamentoUseCase.UpdateAcionamento(int32(id), &acionamento)
+	if err != nil {
+		http.Error(response, "Erro ao editar acionamento.", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+
+	err = json.NewEncoder(response).Encode(&acionamento)
+	if err != nil {
+		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+}

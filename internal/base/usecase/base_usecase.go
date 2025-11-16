@@ -9,6 +9,7 @@ type BaseUseCase interface {
 	Create(base *base.Base) error
 	Fetch() ([]base.Base, error)
 	Delete(id int32) error
+	Update(id int32, base *base.Base) error
 }
 
 type baseUseCase struct {
@@ -41,6 +42,15 @@ func (baseUseCase *baseUseCase) Fetch() ([]base.Base, error) {
 
 func (baseUseCase *baseUseCase) Delete(id int32) error {
 	err := baseUseCase.baseRepository.Delete(id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (baseUsecase *baseUseCase) Update(id int32, base *base.Base) error {
+	err := baseUsecase.baseRepository.Update(id, base)
 	if err != nil {
 		return err
 	}

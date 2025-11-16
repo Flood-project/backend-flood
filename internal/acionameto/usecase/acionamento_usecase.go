@@ -9,6 +9,7 @@ type AcionamentoUseCase interface {
 	Create(acionamento *acionametos.Acionamento) error
 	Fetch() ([]acionametos.Acionamento, error)
 	Delete(id int32) error
+	UpdateAcionamento(id int32, acionamento *acionametos.Acionamento) error
 }
 
 type acionamentoUseCase struct {
@@ -48,3 +49,11 @@ func (usecase *acionamentoUseCase) Delete(id int32) error {
 	return nil
 }
 
+func (usecase *acionamentoUseCase) UpdateAcionamento(id int32, acionamento *acionametos.Acionamento) error {
+	err := usecase.acionamentoRepository.UpdateAcionamento(id, acionamento)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
