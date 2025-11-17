@@ -14,6 +14,7 @@ type BuchaUseCase interface {
 	Fetch() ([]bucha.Bucha, error)
 	Delete(id int32) error
 	GetWithParams(ctx context.Context, params *paginate.PaginationParams) ([]bucha.Bucha, config.PageData, error)
+	Update(id int32, bucha *bucha.Bucha) error
 }
 
 type buchaUseCase struct {
@@ -64,4 +65,13 @@ func (usecase *buchaUseCase) GetWithParams(ctx context.Context, params *paginate
 		Page: int64(params.Page),
 		Limit: int64(params.ItemsPerPage),
 	}, nil
+}
+
+func (usecase *buchaUseCase) Update(id int32, bucha *bucha.Bucha) error {
+	err := usecase.buchaRepository.Update(id, bucha)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

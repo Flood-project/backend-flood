@@ -11,6 +11,9 @@ type AccountUseCase interface {
 	FetchWithUserGroup() ([]account_user.AccountWithUserGroup, error)
 	GetByID(id int32) (*account_user.Account, error)
 	GetByEmail(email string) (*account_user.Account, error)
+	GetUserGroup() ([]account_user.AccountGroupName, error)
+	UpdateUser(id int32, account *account_user.Account) error
+	DeleteUser(id int32) error
 }
 
 type accountUseCase struct {
@@ -60,4 +63,31 @@ func (a *accountUseCase) GetByEmail(email string) (*account_user.Account, error)
 	}
 
 	return account, nil
+}
+
+func (a *accountUseCase) GetUserGroup() ([]account_user.AccountGroupName, error) {
+	groupNames, err := a.accountRepository.GetUserGroup()
+	if err != nil {
+		return nil, err
+	}
+
+	return groupNames, nil
+}
+
+func (a *accountUseCase) UpdateUser(id int32, account *account_user.Account) error {
+	err := a.accountRepository.UpdateUser(id, account)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *accountUseCase) DeleteUser(id int32) error {
+	err := a.accountRepository.DeleteUser(id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

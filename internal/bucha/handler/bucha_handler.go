@@ -120,3 +120,35 @@ func (handler *BuchaHandler) GetWithParams(w http.ResponseWriter, r *http.Reques
 		return
 	}
 }
+
+func (handler *BuchaHandler) UpdateBucha(response http.ResponseWriter, request *http.Request) {
+	idStr := chi.URLParam(request, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	var bucha bucha.Bucha
+
+	err = json.NewDecoder(request.Body).Decode(&bucha)
+	if err != nil {
+		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	err = handler.buchaUseCase.Update(int32(id), &bucha)
+	if err != nil {
+		http.Error(response, "Erro ao modificar bucha.", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+
+	err = json.NewEncoder(response).Encode(&bucha)
+	if err != nil {
+		http.Error(response, "Erro ao enviar resposta para modificar bucha.", http.StatusBadRequest)
+		return 
+	}
+}

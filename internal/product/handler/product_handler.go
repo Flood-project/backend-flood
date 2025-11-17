@@ -89,6 +89,7 @@ func (handler *ProductHandler) WithParams(w http.ResponseWriter, r *http.Request
 
 	rows, pageData, err := handler.productUseCase.WithParams(r.Context(), params)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "Não foi possível utlizar os filtros de pesquisa", http.StatusInternalServerError)
 		return
 	}
@@ -147,6 +148,7 @@ func (handler *ProductHandler) Update(response http.ResponseWriter, request *htt
 
 	err = handler.productUseCase.Update(int32(id), &product)
 	if err != nil {
+		log.Println(err)
 		http.Error(response, "Erro ao atualizar produto", http.StatusInternalServerError)
 		return
 	}
