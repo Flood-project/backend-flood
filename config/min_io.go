@@ -10,7 +10,7 @@ import (
 
 func NewMinIO() (*object_store.MinIOConnectionResponse, error) {
 	connect := object_store.MinIOConfig{
-		Endpoint:  os.Getenv("MINIO_ENDPOINT"),
+		Endpoint:  "minio:9000",	
 		AccessKey: os.Getenv("MINIO_ACCESS_KEY"),
 		SecretKey: os.Getenv("MINIO_SECRET_KEY"),
 		UseSSL:    false,

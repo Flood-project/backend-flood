@@ -1,5 +1,7 @@
 package product
 
+import "github.com/Flood-project/backend-flood/internal/object_store"
+
 type ProductWithComponents struct {
 	Id                 int32  `json:"id" db:"id" paginate:"p.id"`
 	Codigo             string `json:"codigo" db:"codigo" paginate:"p.codigo"`
@@ -16,4 +18,5 @@ type ProductWithComponents struct {
 	IdBase             int32  `json:"id_base" db:"id_base" paginate:"p.base"`
 	TipoBase           string `json:"tipobase" db:"tipobase" paginate:"bs.tipobase"`
 	Ativo 			   bool   `json:"ativo" db:"ativo" paginate:"p.ativo"`
+  	Images             []object_store.FileData `json:"images"`
 }

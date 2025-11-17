@@ -3,7 +3,7 @@ package usecase
 import (
 	"bytes"
 	"context"
-	
+
 	"log"
 
 	"github.com/Flood-project/backend-flood/internal/object_store"
@@ -12,23 +12,25 @@ import (
 )
 
 type ObjectStoreUseCase interface {
-	AddFile(file *object_store.FileData, fileByte []byte) error
+	AddFile(file *object_store.FileData, fileByte []byte, productId int32) error
 	FetchFiles() ([]object_store.FileData, error)
+	GetFileUrl(storageKey string) (string, error)
+	GetObject(storageKey string) ([]byte, string, error)
 }
 
 type objectStoreUseCase struct {
-	objectStoreRepository repository.ObjectStoreManager
+	objectStoreRepository   repository.ObjectStoreManager
 	minIOConnectionResponse object_store.MinIOConnectionResponse
 }
 
-func NewObjectStoreUseCase(objectStoreRepository repository.ObjectStoreManager, minIOConnectionResponse object_store.MinIOConnectionResponse) ObjectStoreUseCase{
+func NewObjectStoreUseCase(objectStoreRepository repository.ObjectStoreManager, minIOConnectionResponse object_store.MinIOConnectionResponse) ObjectStoreUseCase {
 	return &objectStoreUseCase{
-		objectStoreRepository: objectStoreRepository,
+		objectStoreRepository:   objectStoreRepository,
 		minIOConnectionResponse: minIOConnectionResponse,
 	}
 }
 
-func (usecase *objectStoreUseCase) AddFile(file *object_store.FileData, fileByte []byte) error {
+func (usecase *objectStoreUseCase) AddFile(file *object_store.FileData, fileByte []byte, productId int32) error {
 	ctx := context.Background()
 
 	exists, err := usecase.minIOConnectionResponse.Client.BucketExists(ctx, usecase.minIOConnectionResponse.Bucket)
@@ -62,7 +64,7 @@ func (usecase *objectStoreUseCase) AddFile(file *object_store.FileData, fileByte
 		log.Println("Erro ao salvar imagem no minIO. ", err)
 		return err
 	}
-	return usecase.objectStoreRepository.AddFile(file, fileByte)
+	return usecase.objectStoreRepository.AddFile(file, fileByte, productId)
 	// file.URL = fmt.Sprintf("/%s/%s", usecase.minIOConnectionResponse.Bucket, info.Key)
 	// file.Size = info.Size
 
@@ -85,4 +87,23 @@ func (usecase *objectStoreUseCase) FetchFiles() ([]object_store.FileData, error)
 	}
 
 	return files, err
+}
+
+func (uc *objectStoreUseCase) GetFileUrl(storageKey string) (string, error) {
+	url, err := uc.objectStoreRepository.GetFileUrl(storageKey)
+	if err != nil {
+		log.Println("erro arquivos: ", err)
+		return "", err
+	}
+	return url, nil
+}
+
+
+func (uc *objectStoreUseCase) GetObject(storageKey string) ([]byte, string, error){
+	fileByte, url, err := uc.objectStoreRepository.GetObject(storageKey)
+	if err != nil {
+		log.Println("Erro ao buscar imagem", err)
+		return nil, "", err
+	}
+	return fileByte, url, nil
 }

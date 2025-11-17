@@ -74,6 +74,7 @@ func (handler *ProductHandler) FetchWithComponents(response http.ResponseWriter,
 	response.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(response).Encode(&productsWithComponents)
 	if err != nil {
+		log.Println("erro aqui: ", err)
 		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}

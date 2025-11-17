@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Flood-project/backend-flood/config"
+	"github.com/Flood-project/backend-flood/internal/object_store"
 	"github.com/Flood-project/backend-flood/internal/product"
 	"github.com/Flood-project/backend-flood/internal/product/repository"
 	"github.com/booscaaa/go-paginate/v3/paginate"
@@ -17,6 +18,7 @@ type ProductUseCase interface {
 	Update(id int32, product *product.Produt) error
 	Delete(id int32) error
 	WithParams(ctx context.Context, params *paginate.PaginationParams) ([]product.ProductWithComponents, config.PageData, error)
+	GetProductByIdWithImage(id int32) ([]object_store.FileData, error)
 }
 
 type productUseCase struct {
@@ -93,4 +95,13 @@ func (productUseCase *productUseCase) WithParams(ctx context.Context, params *pa
 		Page:  int64(params.Page),
 		Limit: int64(params.ItemsPerPage),
 	}, nil
+}
+
+func (productUseCase *productUseCase) GetProductByIdWithImage(productID int32) ([]object_store.FileData, error) {
+	image, err := productUseCase.productRepository.GetProductByIdWithImage(productID)
+	if err != nil {
+		return nil, err
+	}
+
+	return image, nil
 }

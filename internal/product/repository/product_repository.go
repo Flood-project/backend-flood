@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Flood-project/backend-flood/internal/object_store"
+	"github.com/Flood-project/backend-flood/internal/object_store/repository"
 	"github.com/Flood-project/backend-flood/internal/product"
 	"github.com/booscaaa/go-paginate/v3/paginate"
 	"github.com/jmoiron/sqlx"
@@ -18,15 +20,18 @@ type ProductManager interface {
 	Update(id int32, product *product.Produt) error
 	Delete(id int32) error
 	WithParams(ctx context.Context, params *paginate.PaginationParams) ([]product.ProductWithComponents, int, error)
+	GetProductByIdWithImage(id int32) ([]object_store.FileData, error)
 }
 
 type productManager struct {
 	DB *sqlx.DB
+	ObjectStoreManager repository.ObjectStoreManager
 }
 
-func NewProductManager(db *sqlx.DB) ProductManager {
+func NewProductManager(db *sqlx.DB, objectStore repository.ObjectStoreManager) ProductManager {
 	return &productManager{
 		DB: db,
+		ObjectStoreManager: objectStore,
 	}
 }
 
@@ -76,11 +81,34 @@ func (productManager *productManager) Fetch() ([]product.Produt, error) {
 	return products, nil
 }
 
+func (productManager *productManager) GetProductByIdWithImage(productID int32) ([]object_store.FileData, error) {
+    query := `
+        SELECT 
+            f.id,
+            f.product_id,
+            f.file_name,
+            f.storage_key,
+            f.size,
+            f.content_type,
+            'http://localhost:8080/files/images/' || f.storage_key as url
+        FROM files f
+        WHERE f.product_id = $1
+    `
+    
+    var files []object_store.FileData
+    err := productManager.DB.Select(&files, query, productID)
+    if err != nil {
+        return nil, err
+    }
+    
+    return files, nil
+}
+
 func (productManager *productManager) FetchWithComponents() ([]product.ProductWithComponents, error) {
 	query := `SELECT 
 				p.id,
 				p.codigo,
-				p.description,
+				p.description,c
 				p.capacidade_estatica,
 				p.capacidade_trabalho,
 				p.reducao,
@@ -109,6 +137,15 @@ func (productManager *productManager) FetchWithComponents() ([]product.ProductWi
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	for i := range productsWithComponents {
+		images, err := productManager.GetProductByIdWithImage(int32(productsWithComponents[i].Id))
+		if err != nil {
+			log.Println("Erro ao buscar imagens do produto... ", err)
+			continue
+		}
+		productsWithComponents[i].Images = images
 	}
 
 	return productsWithComponents, nil
@@ -210,6 +247,15 @@ func (produtctManager *productManager) WithParams(ctx context.Context, params *p
 	err = produtctManager.DB.SelectContext(ctx, &products, query, args...)
 	if err != nil {
 		return nil, 0, err
+	}
+
+	for i := range products {
+		images, err := produtctManager.GetProductByIdWithImage(int32(products[i].Id))
+		if err != nil {
+			log.Println("Erro ao buscar imagens do produto... ", err)
+			continue
+		}
+		products[i].Images = images
 	}
 
 	total := len(products)
