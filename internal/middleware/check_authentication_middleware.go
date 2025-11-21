@@ -1,11 +1,13 @@
 package middleware
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
 
 	"github.com/Flood-project/backend-flood/internal/token"
+	"github.com/Flood-project/backend-flood/internal/token/util"
 )
 
 func UserUnathorized(response http.ResponseWriter) {
@@ -37,11 +39,16 @@ func CheckAuthentication(tokenManager token.TokenManager) func(http.Handler) htt
 				return
 			}
 
-			// claims := util.ExtractClaims(token)
+			claims := util.ExtractClaims(token)
 
-			// ctx := context.WithValue(request.Context(), "user_id", claims.IdUser)
+			ctx := context.WithValue(request.Context(), "user_id", claims.IdUser)
 
-			next.ServeHTTP(response, request)
+			reqWithCtx := request.WithContext(ctx)
+
+			//to use this id in handler:
+			//userID := request.Context().Value("user_id").(int)
+
+			next.ServeHTTP(response, reqWithCtx)
 		})
 	}
 }
