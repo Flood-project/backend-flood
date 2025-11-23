@@ -117,6 +117,7 @@ func (handler *ProductHandler) GetByID(response http.ResponseWriter, request *ht
 
 	product, err := handler.productUseCase.GetByID(int32(id))
 	if err != nil {
+		log.Println(err)
 		http.Error(response, "Erro ao buscar produto por id", http.StatusInternalServerError)
 		return
 	}

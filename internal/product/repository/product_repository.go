@@ -16,7 +16,7 @@ type ProductManager interface {
 	Create(product *product.Produt) error
 	Fetch() ([]product.Produt, error)
 	FetchWithComponents() ([]product.ProductWithComponents, error)
-	GetByID(id int32) (*product.Produt, error)
+	GetByID(id int32) (*product.ProductWithComponents, error)
 	Update(id int32, product *product.Produt) error
 	Delete(id int32) error
 	WithParams(ctx context.Context, params *paginate.PaginationParams) ([]product.ProductWithComponents, int, error)
@@ -151,33 +151,93 @@ func (productManager *productManager) FetchWithComponents() ([]product.ProductWi
 	return productsWithComponents, nil
 }
 
-func (productManager *productManager) GetByID(id int32) (*product.Produt, error) {
-	var product product.Produt
-	query := `SELECT id, codigo, description, capacidade_estatica, capacidade_trabalho, reducao, altura_bucha, curso, ativo, id_bucha, id_acionamento, id_base FROM products WHERE id = $1`
+func (productManager *productManager) GetByID(id int32) (*product.ProductWithComponents, error) {
+	var product product.ProductWithComponents
+	var images []object_store.FileData
+	first := true
+	// query := `
+	// 		SELECT id,
+	// 		codigo, 
+	// 		description, 
+	// 		capacidade_estatica, 
+	// 		capacidade_trabalho, 
+	// 		reducao, 
+	// 		altura_bucha, 
+	// 		curso, 
+	// 		ativo, 
+	// 		id_bucha, 
+	// 		id_acionamento, 
+	// 		id_base 
+	// 			FROM products WHERE id = $1
+	// 	`
+	query := `
+		SELECT 
+		  f.id,
+		  f.product_id,
+		  p.codigo,
+			p.description, 
+			p.capacidade_estatica, 
+			p.capacidade_trabalho, 
+			p.reducao, 
+			p.altura_bucha, 
+			p.curso, 
+			p.ativo, 
+			p.id_bucha, 
+			p.id_acionamento, 
+			p.id_base, 
+		  f.file_name,
+		  f.url,
+		  f.size,
+		  f.content_type
+		FROM files f
+		INNER JOIN products p
+		  ON p.id = f.product_id WHERE p.id = $1
+	`
 
-	err := productManager.DB.QueryRow(
+	rows, err := productManager.DB.Query(
 		query,
 		id,
-	).Scan(
-		&product.Id,
-		&product.Codigo,
-		&product.Description,
-		&product.CapacidadeEstatica,
-		&product.CapacidadeTrabalho,
-		&product.Reducao,
-		&product.AlturaBucha,
-		&product.Curso,
-		&product.Ativo,
-		&product.Id_bucha,
-		&product.Id_acionamento,
-		&product.Id_base,
 	)
+	 if err != nil {
+        return nil, err
+    }
+	for rows.Next() {
+		var file object_store.FileData
 
-	if err != nil {
-		return nil, err
+		err := rows.Scan(
+			&file.ID,
+			&file.ProductID,
+			&product.Codigo,
+			&product.Description,
+			&product.CapacidadeEstatica,
+			&product.CapacidadeTrabalho,
+			&product.Reducao,
+			&product.AlturaBucha,
+			&product.Curso,
+			&product.Ativo,
+			&product.IdBucha,
+			&product.IdAcionamento,
+			&product.IdBase,
+			&file.FileName,
+			&file.URL,
+			&file.Size,
+			&file.ContentType,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if first {
+			product.Id = file.ProductID
+			first = false
+		}
+
+		images = append(images, file)
 	}
 
-	return &product, err
+	product.Images = images
+
+	return &product, nil
 }
 
 func (productManager *productManager) Update(id int32, product *product.Produt) error {

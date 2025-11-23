@@ -14,7 +14,7 @@ type ProductUseCase interface {
 	Create(product *product.Produt) error
 	Fetch() ([]product.Produt, error)
 	FetchWithComponents() ([]product.ProductWithComponents, error)
-	GetByID(id int32) (*product.Produt, error)
+	GetByID(id int32) (*product.ProductWithComponents, error)
 	Update(id int32, product *product.Produt) error
 	Delete(id int32) error
 	WithParams(ctx context.Context, params *paginate.PaginationParams) ([]product.ProductWithComponents, config.PageData, error)
@@ -57,7 +57,7 @@ func (productUseCase *productUseCase) FetchWithComponents() ([]product.ProductWi
 	return productsWithComponents, err
 }
 
-func (productUseCase *productUseCase) GetByID(id int32) (*product.Produt, error) {
+func (productUseCase *productUseCase) GetByID(id int32) (*product.ProductWithComponents, error) {
 	product, err := productUseCase.productRepository.GetByID(id)
 	if err != nil {
 		return nil, err
