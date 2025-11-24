@@ -3,6 +3,7 @@ package router
 import (
 	accountHandler "github.com/Flood-project/backend-flood/internal/account_user/handler"
 	acionamentoHandler "github.com/Flood-project/backend-flood/internal/acionameto/handler"
+	auditLogHandler "github.com/Flood-project/backend-flood/internal/audit_log/handler"
 	baseHandler "github.com/Flood-project/backend-flood/internal/base/handler"
 	buchaHandler "github.com/Flood-project/backend-flood/internal/bucha/handler"
 	loginHandler "github.com/Flood-project/backend-flood/internal/login/handler"
@@ -37,10 +38,11 @@ func CreateNewServer(tokenKey token.TokenManager) *Server {
 	}
 }
 
-func (s *Server) MountAccounts(handler *accountHandler.AccountHandler) {
+func (s *Server) MountAccounts(handler *accountHandler.AccountHandler, auditMiddleware *middleware.AuditMiddleware) {
 	s.Router.Route("/accounts", func(r chi.Router) {
 		//middleware para todas as rotas de accounts
 		r.Use(middleware.CheckAuthentication(s.TokenManager))
+		r.Use(auditMiddleware.GlobalAuditLog)
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
 		r.Get("/groupid", handler.FetchWithUserGroup)
@@ -110,5 +112,11 @@ func (s *Server) MountObjectStore(handler *ObjectStoreHandler.ObjectStoreHandler
 			r.Get("/url/{storageKey}", handler.GetFileUrl)
 		})
 		r.Get("/images/{storageKey}", handler.ServeImage)
+	})
+}
+
+func (s *Server) MountLogs(handler *auditLogHandler.AuditLogHandler) {
+	s.Router.Route("/logs", func(r chi.Router) {
+		r.Get("/", handler.Fetch)
 	})
 }
