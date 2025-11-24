@@ -7,7 +7,6 @@ require (
 	github.com/go-chi/cors v1.2.2
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/jmoiron/sqlx v1.4.0
-	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/minio/minio-go/v7 v7.0.95
 	golang.org/x/crypto v0.41.0
@@ -32,4 +31,5 @@ require (
 	golang.org/x/text v0.28.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-require github.com/booscaaa/go-paginate/v3 v3.0.7 // indirect
+
+require github.com/booscaaa/go-paginate/v3 v3.0.7
