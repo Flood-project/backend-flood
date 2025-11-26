@@ -30,7 +30,7 @@ func (handler *ProductHandler) Create(response http.ResponseWriter, request *htt
 		return
 	}
 
-	err = handler.productUseCase.Create(&product)
+	Newproduct, err := handler.productUseCase.Create(&product)
 	if err != nil {
 		http.Error(response, "Erro ao adicionar novo produto.", http.StatusInternalServerError)
 		return
@@ -39,7 +39,7 @@ func (handler *ProductHandler) Create(response http.ResponseWriter, request *htt
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 
-	err = json.NewEncoder(response).Encode(&product)
+	err = json.NewEncoder(response).Encode(&Newproduct)
 	if err != nil {
 		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
@@ -149,7 +149,7 @@ func (handler *ProductHandler) Update(response http.ResponseWriter, request *htt
 
 	err = handler.productUseCase.Update(int32(id), &product)
 	if err != nil {
-		log.Println(err)
+		log.Println("erro ao atualizar produto... ", err)
 		http.Error(response, "Erro ao atualizar produto", http.StatusInternalServerError)
 		return
 	}

@@ -11,7 +11,7 @@ import (
 )
 
 type ProductUseCase interface {
-	Create(product *product.Produt) error
+	Create(product *product.Produt) (*product.Produt, error)
 	Fetch() ([]product.Produt, error)
 	FetchWithComponents() ([]product.ProductWithComponents, error)
 	GetByID(id int32) (*product.ProductWithComponents, error)
@@ -31,12 +31,12 @@ func NewProductUseCase(productRepository *repository.ProductManager) ProductUseC
 	}
 }
 
-func (productUseCase *productUseCase) Create(product *product.Produt) error {
-	err := productUseCase.productRepository.Create(product)
+func (productUseCase *productUseCase) Create(product *product.Produt) (*product.Produt, error) {
+	product, err := productUseCase.productRepository.Create(product)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return nil
+	return product, nil
 }
 
 func (productUseCase *productUseCase) Fetch() ([]product.Produt, error) {
