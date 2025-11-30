@@ -30,7 +30,7 @@ func NewAuditMiddleware(auditUseCase usecase.AuditLogUseCase, tokenManager token
 func getOperationFromMethod(method string) string {
 	switch method {
 	case "GET":
-		return "SELECT"
+		return ""
 	case "POST":
 		return "INSERT"
 	case "PUT", "PATCH":

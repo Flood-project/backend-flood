@@ -13,7 +13,7 @@ import (
 )
 
 type ProductManager interface {
-	Create(product *product.Produt) error
+	Create(product *product.Produt) (*product.Produt, error)
 	Fetch() ([]product.Produt, error)
 	FetchWithComponents() ([]product.ProductWithComponents, error)
 	GetByID(id int32) (*product.ProductWithComponents, error)
@@ -35,7 +35,7 @@ func NewProductManager(db *sqlx.DB, objectStore repository.ObjectStoreManager) P
 	}
 }
 
-func (productManager *productManager) Create(product *product.Produt) error {
+func (productManager *productManager) Create(product *product.Produt) (*product.Produt, error) {
 	query := `INSERT INTO products (
 		codigo, description, capacidade_estatica, capacidade_trabalho, reducao, altura_bucha, curso, id_bucha, id_acionamento, id_base, ativo
 	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -57,10 +57,10 @@ func (productManager *productManager) Create(product *product.Produt) error {
 	).Scan(&product.Id)
 	if err != nil {
 		log.Println(err)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return product, nil
 }
 
 func (productManager *productManager) Fetch() ([]product.Produt, error) {
@@ -186,7 +186,7 @@ func (productManager *productManager) GetByID(id int32) (*product.ProductWithCom
 			p.id_acionamento, 
 			p.id_base, 
 		  f.file_name,
-		  f.url,
+		  'http://localhost:8080/files/images/' || f.storage_key as url,
 		  f.size,
 		  f.content_type
 		FROM files f
