@@ -66,6 +66,7 @@ func (s *Server) MountLogin(handler *loginHandler.LoginHandler, tokenHandler *to
 
 func (s *Server) MountProducts(handler *productHandler.ProductHandler) {
 	s.Router.Route("/products", func(r chi.Router) {
+		r.Use(middleware.CheckAuthentication(s.TokenManager))
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
 		r.Get("/buchas/acionamentos/bases", handler.FetchWithComponents)
@@ -78,6 +79,7 @@ func (s *Server) MountProducts(handler *productHandler.ProductHandler) {
 
 func (s *Server) MountBase(handler *baseHandler.BaseHandler) {
 	s.Router.Route("/bases", func(r chi.Router) {
+		r.Use(middleware.CheckAuthentication(s.TokenManager))
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
 		r.Delete("/{id}", handler.Delete)
@@ -86,6 +88,7 @@ func (s *Server) MountBase(handler *baseHandler.BaseHandler) {
 }
 func (s *Server) MountAcionamentos(handler *acionamentoHandler.AcionamentoHandler) {
 	s.Router.Route("/acionamentos", func(r chi.Router) {
+		r.Use(middleware.CheckAuthentication(s.TokenManager))
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
 		r.Delete("/{id}", handler.Delete)
@@ -95,6 +98,7 @@ func (s *Server) MountAcionamentos(handler *acionamentoHandler.AcionamentoHandle
 
 func (s *Server) MountBuchas(handler *buchaHandler.BuchaHandler) {
 	s.Router.Route("/buchas", func(r chi.Router) {
+		r.Use(middleware.CheckAuthentication(s.TokenManager))
 		r.Post("/", handler.Create)
 		r.Get("/", handler.Fetch)
 		r.Delete("/{id}", handler.Delete)
