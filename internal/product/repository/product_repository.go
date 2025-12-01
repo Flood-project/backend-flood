@@ -24,13 +24,13 @@ type ProductManager interface {
 }
 
 type productManager struct {
-	DB *sqlx.DB
+	DB                 *sqlx.DB
 	ObjectStoreManager repository.ObjectStoreManager
 }
 
 func NewProductManager(db *sqlx.DB, objectStore repository.ObjectStoreManager) ProductManager {
 	return &productManager{
-		DB: db,
+		DB:                 db,
 		ObjectStoreManager: objectStore,
 	}
 }
@@ -82,7 +82,7 @@ func (productManager *productManager) Fetch() ([]product.Produt, error) {
 }
 
 func (productManager *productManager) GetProductByIdWithImage(productID int32) ([]object_store.FileData, error) {
-    query := `
+	query := `
         SELECT 
             f.id,
             f.product_id,
@@ -94,14 +94,14 @@ func (productManager *productManager) GetProductByIdWithImage(productID int32) (
         FROM files f
         WHERE f.product_id = $1
     `
-    
-    var files []object_store.FileData
-    err := productManager.DB.Select(&files, query, productID)
-    if err != nil {
-        return nil, err
-    }
-    
-    return files, nil
+
+	var files []object_store.FileData
+	err := productManager.DB.Select(&files, query, productID)
+	if err != nil {
+		return nil, err
+	}
+
+	return files, nil
 }
 
 func (productManager *productManager) FetchWithComponents() ([]product.ProductWithComponents, error) {
@@ -157,17 +157,17 @@ func (productManager *productManager) GetByID(id int32) (*product.ProductWithCom
 	first := true
 	// query := `
 	// 		SELECT id,
-	// 		codigo, 
-	// 		description, 
-	// 		capacidade_estatica, 
-	// 		capacidade_trabalho, 
-	// 		reducao, 
-	// 		altura_bucha, 
-	// 		curso, 
-	// 		ativo, 
-	// 		id_bucha, 
-	// 		id_acionamento, 
-	// 		id_base 
+	// 		codigo,
+	// 		description,
+	// 		capacidade_estatica,
+	// 		capacidade_trabalho,
+	// 		reducao,
+	// 		altura_bucha,
+	// 		curso,
+	// 		ativo,
+	// 		id_bucha,
+	// 		id_acionamento,
+	// 		id_base
 	// 			FROM products WHERE id = $1
 	// 	`
 	query := `
@@ -198,9 +198,9 @@ func (productManager *productManager) GetByID(id int32) (*product.ProductWithCom
 		query,
 		id,
 	)
-	 if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	for rows.Next() {
 		var file object_store.FileData
 
@@ -277,13 +277,20 @@ func (productManager *productManager) Update(id int32, product *product.Produt) 
 func (productManager *productManager) Delete(id int32) error {
 	query := `DELETE FROM products WHERE id=$1`
 
-	err := productManager.DB.QueryRow(
-		query,
-		id,
-	)
+	result, err := productManager.DB.Exec(query, id)
 	if err != nil {
-		return nil
+		return fmt.Errorf("erro ao executar delete: %w", err)
 	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("erro ao verificar linhas afetadas: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("produto com id %d não encontrado", id)
+	}
+
 	return nil
 }
 

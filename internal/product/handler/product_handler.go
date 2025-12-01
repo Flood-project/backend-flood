@@ -168,15 +168,17 @@ func (handler *ProductHandler) Delete(response http.ResponseWriter, request *htt
 	idStr := chi.URLParam(request, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(response, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		http.Error(response, "ID inválido", http.StatusBadRequest)
 		return
 	}
 
 	err = handler.productUseCase.Delete(int32(id))
 	if err != nil {
-		http.Error(response, "Erro ao deletar produto.", http.StatusInternalServerError)
+		log.Printf("❌ Erro ao deletar produto %d: %v", id, err)
+		http.Error(response, "Erro ao deletar produto", http.StatusInternalServerError)
+		return // ← FALTAVA o return aqui!
 	}
 
 	response.Header().Set("Content-Type", "application/json")
-	response.WriteHeader(http.StatusOK)
+	response.WriteHeader(http.StatusNoContent) // ← 204 é mais apropriado para DELETE
 }
